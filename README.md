@@ -1,6 +1,6 @@
 # Decorum
 
-**TODO: Add description**
+Property-based testing for Elixir with shrinking that just works.
 
 ## Installation
 
