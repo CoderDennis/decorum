@@ -1,10 +1,10 @@
 defmodule PRNG do
   @moduledoc """
-  PRNG (pseudo random number generator) is a wrapper around the :rand module.
+  `PRNG` (pseudo random number generator) is a wrapper around the `:rand` module.
 
   It has 2 states:
   1. Random
-    Uses :rand to generate random numbers and stores each one in history.
+    Uses `:rand` to generate random numbers and stores each one in history.
 
   2. Hardcoded
     Used to replay a previously recorded (or simplified) history.
