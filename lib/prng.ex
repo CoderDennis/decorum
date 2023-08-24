@@ -15,7 +15,7 @@ defmodule PRNG do
   @type prng :: PRNG.Random.t() | PRNG.Hardcoded.t()
   @type history :: list(non_neg_integer())
 
-  @int64 Integer.pow(2, 64)
+  @int32 Integer.pow(2, 32)
 
   defmodule Random do
     @moduledoc false
@@ -26,7 +26,7 @@ defmodule PRNG do
 
     @spec new(seed :: non_neg_integer()) :: t
     def new(seed) do
-      state = :rand.seed(:exs1024s, {seed, seed, seed})
+      state = :rand.seed(:exsss, {seed, seed, seed})
       %__MODULE__{state: state, history: []}
     end
   end
@@ -52,7 +52,7 @@ defmodule PRNG do
 
   @spec next(t()) :: {non_neg_integer() | :error, t()}
   def next(%PRNG.Random{state: state, history: history} = prng) do
-    {value, new_state} = :rand.uniform_s(@int64, state)
+    {value, new_state} = :rand.uniform_s(@int32, state)
     {value, %PRNG.Random{prng | state: new_state, history: [value | history]}}
   end
 

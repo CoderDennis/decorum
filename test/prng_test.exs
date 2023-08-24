@@ -2,12 +2,7 @@ defmodule PRNGTest do
   use ExUnit.Case
 
   test "random PRNG preserves history" do
-    {values, prng} =
-      1..10
-      |> Enum.reduce({[], PRNG.random(ExUnit.configuration()[:seed])}, fn _, {list, prng} ->
-        {value, new_prng} = PRNG.next(prng)
-        {list ++ [value], new_prng}
-      end)
+    {values, prng} = get_values(PRNG.random(ExUnit.configuration()[:seed]), 10)
 
     history = PRNG.get_history(prng)
 
@@ -36,14 +31,9 @@ defmodule PRNGTest do
   end
 
   test "hardcoded PRNG replays the given history" do
-    history = Enum.to_list(101..150)
+    history = Enum.to_list(100..150)
 
-    {values, _prng} =
-      1..50
-      |> Enum.reduce({[], PRNG.hardcoded(history)}, fn _, {list, prng} ->
-        {value, new_prng} = PRNG.next(prng)
-        {list ++ [value], new_prng}
-      end)
+    {values, _prng} = get_values(PRNG.hardcoded(history), 50)
 
     assert history == values
   end
@@ -54,5 +44,14 @@ defmodule PRNGTest do
     prng = PRNG.hardcoded(history)
     {1, prng} = PRNG.next(prng)
     {:error, _} = PRNG.next(prng)
+  end
+
+  @spec get_values(prng :: PRNG.t(), count :: non_neg_integer()) :: {non_neg_integer(), PRNG.t()}
+  def get_values(prng, count) do
+    0..count
+    |> Enum.reduce({[], prng}, fn _, {list, prng} ->
+      {value, new_prng} = PRNG.next(prng)
+      {list ++ [value], new_prng}
+    end)
   end
 end
