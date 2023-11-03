@@ -1,4 +1,4 @@
-defmodule PRNG do
+defmodule Decorum.PRNG do
   @moduledoc """
   `PRNG` (pseudo random number generator) is a wrapper around the `:rand` module.
 
@@ -65,17 +65,17 @@ defmodule PRNG do
     def get_history(%__MODULE__{wholeHistory: history}), do: history
   end
 
-  @spec random(seed :: non_neg_integer()) :: t
-  defdelegate random(seed), to: PRNG.Random, as: :new
+  @spec random(seed :: non_neg_integer()) :: t()
+  defdelegate random(seed), to: __MODULE__.Random, as: :new
 
-  @spec hardcoded(history :: history()) :: t
-  defdelegate hardcoded(history), to: PRNG.Hardcoded, as: :new
+  @spec hardcoded(history :: history()) :: t()
+  defdelegate hardcoded(history), to: __MODULE__.Hardcoded, as: :new
 
   @spec next(prng :: t()) :: {non_neg_integer() | :error, t()}
-  def next(%PRNG.Random{} = prng), do: PRNG.Random.next(prng)
-  def next(%PRNG.Hardcoded{} = prng), do: PRNG.Hardcoded.next(prng)
+  def next(%__MODULE__.Random{} = prng), do: __MODULE__.Random.next(prng)
+  def next(%__MODULE__.Hardcoded{} = prng), do: __MODULE__.Hardcoded.next(prng)
 
   @spec get_history(prng :: t()) :: history()
-  def get_history(%PRNG.Random{} = prng), do: PRNG.Random.get_history(prng)
-  def get_history(%PRNG.Hardcoded{} = prng), do: PRNG.Hardcoded.get_history(prng)
+  def get_history(%__MODULE__.Random{} = prng), do: __MODULE__.Random.get_history(prng)
+  def get_history(%__MODULE__.Hardcoded{} = prng), do: __MODULE__.Hardcoded.get_history(prng)
 end

@@ -1,6 +1,8 @@
 defmodule PRNGTest do
   use ExUnit.Case
 
+  alias Decorum.PRNG
+
   test "random PRNG preserves history" do
     {values, prng} = get_values(PRNG.random(ExUnit.configuration()[:seed]), 10)
 
