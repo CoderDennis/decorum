@@ -12,12 +12,12 @@ defmodule Decorum.PRNG do
   """
 
   @type t :: prng
-  @type prng :: PRNG.Random.t() | PRNG.Hardcoded.t()
+  @type prng :: __MODULE__.Random.t() | __MODULE__.Hardcoded.t()
   @type history :: list(non_neg_integer())
 
   defmodule Random do
     @moduledoc false
-    @type t :: %__MODULE__{state: :rand.state(), history: PRNG.history()}
+    @type t :: %__MODULE__{state: :rand.state(), history: Decorum.PRNG.history()}
 
     @enforce_keys [:state, :history]
     defstruct [:state, :history]
@@ -36,18 +36,19 @@ defmodule Decorum.PRNG do
       {value, %__MODULE__{prng | state: new_state, history: [value | history]}}
     end
 
-    @spec get_history(prng :: t()) :: PRNG.history()
+    @spec get_history(prng :: t()) :: Decorum.PRNG.history()
     def get_history(%__MODULE__{history: history}), do: Enum.reverse(history)
   end
 
   defmodule Hardcoded do
     @moduledoc false
-    @type t :: %__MODULE__{wholeHistory: PRNG.history(), unusedHistory: PRNG.history()}
+    @type t :: %__MODULE__{wholeHistory: Decorum.PRNG.history(),
+    unusedHistory: Decorum.PRNG.history()}
 
     @enforce_keys [:wholeHistory, :unusedHistory]
     defstruct [:wholeHistory, :unusedHistory]
 
-    @spec new(history :: PRNG.history()) :: t
+    @spec new(history :: Decorum.PRNG.history()) :: t
     def new(history) when is_list(history) do
       %__MODULE__{wholeHistory: history, unusedHistory: history}
     end
@@ -61,7 +62,7 @@ defmodule Decorum.PRNG do
       {value, %__MODULE__{prng | unusedHistory: rest}}
     end
 
-    @spec get_history(prng :: t()) :: PRNG.history()
+    @spec get_history(prng :: t()) :: Decorum.PRNG.history()
     def get_history(%__MODULE__{wholeHistory: history}), do: history
   end
 

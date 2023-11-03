@@ -19,7 +19,8 @@ defmodule Decorum do
   @doc """
   Used to run a Decorum generator.
 
-  Takes a Decorum struct and a seed or a PRNG struct and returns a lazy Enumerable of generated values.
+  Takes a Decorum struct and a seed or a PRNG struct and returns a lazy Enumerable
+  of generated values.
   """
   @spec stream(t(a), non_neg_integer() | PRNG.t()) :: Enumerable.t(a) when a: term()
   def stream(decorum, seed) when is_integer(seed) do
@@ -31,7 +32,8 @@ defmodule Decorum do
   end
 
   @doc """
-  `check_all` takes a Decorum struct and runs `body_fn` against the generated values.
+  `check_all` takes a Decorum struct and a PRNG struct and runs `body_fn`
+  against the generated values.
 
   This funciton will expand and eventually be called by a macro, but for now it's part
   of bootsrtapping the property testing functionality.
@@ -41,7 +43,7 @@ defmodule Decorum do
 
   TODO: Create a Decorum.Error and raise that instead of ExUnit.AssertionError.
   """
-  @spec check_all(t(a), PRNG.t(), (a -> nil)) :: nil when a: term()
+  @spec check_all(t(a), PRNG.t(), (a -> nil)) :: :ok when a: term()
   def check_all(decorum, prng, body_fn) do
     decorum
     |> stream(prng)
@@ -49,5 +51,13 @@ defmodule Decorum do
     |> Enum.each(fn value ->
       body_fn.(value)
     end)
+  end
+
+
+  @doc """
+      creates a simple Decorum generator that just outputs the values it gets from the prng.
+  """
+  def pos_integer() do
+    Decorum.new(fn prng -> PRNG.next(prng) end)
   end
 end
