@@ -4,20 +4,22 @@ defmodule Decorum do
   """
 
   @doc """
-  `for_all` takes a single `generator`, which needs to be enumerable
+  `check_all` takes a single `generator`, which needs to be enumerable
   and runs `body_fn` against it.
 
   This funciton will expand and eventually be called by a macro, but for now it's part
   of bootsrtapping the property testing functionality.
+
+  `body_fn` should behaive like a normal ExUnit test. It throws an error if a test fails.
+  Use the assert or other macros inside that function.
+
+  TODO: Create a Decorum.Error and raise that instead of ExUnit.AssertionError.
   """
-  def for_all(generator, body_fn) do
+  def check_all(generator, body_fn) do
     generator
     |> Enum.take(100)
     |> Enum.each(fn value ->
-      unless body_fn.(value) do
-        # raise an error so that ExUnit can report the test failure.
-        raise "Test failed with value: #{value}"
-      end
+      body_fn.(value)
     end)
   end
 end
