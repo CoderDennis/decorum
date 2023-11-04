@@ -19,7 +19,7 @@ From https://hexdocs.pm/ex_unit/1.15.4/ExUnit.html#configure/1-options
 
 - [ ] Get end to end working with single integer shrinking and then stream of integers. Use these to test prng history shrinking.
 
-How does the float generator optimize for shrinking? (I initially guessed that it simplified towards 1.0 instead of towards zero, but that wouldn’t produce simpler fractions. I ) See https://github.com/HypothesisWorks/hypothesis/blob/d55849df92d01a25364aa2 1a1adb310ee0a3a390/hypothesis- python/src/hypothesis/internal/conjecture/floats.py which was linked to from https://github.com/elm-explorations/test/blob/master/src/Fuzz/Float.elm
+How does the float generator optimize for shrinking? (I initially guessed that it simplified towards 1.0 instead of towards zero, but that wouldn’t produce simpler fractions.) See https://github.com/HypothesisWorks/hypothesis/blob/d55849df92d01a25364aa21a1adb310ee0a3a390/hypothesis-python/src/hypothesis/internal/conjecture/floats.py which was linked to from https://github.com/elm-explorations/test/blob/master/src/Fuzz/Float.elm
 
 - [ ] If rand.uniform is given a range, then shrinking prng history should respect that range. Is there a way to apply the range on an already shrunken random value? Random int in range hi - lo plus lo. Copy from elm implementation because the range could be negative.
 
@@ -43,7 +43,7 @@ In Elm implementation Fuzz.elm, why does forcedChoice need to consume a random n
 
 - [ ] Do we need to label chunks of random history the way hypothesis does? I couldn’t find the equivalent in the Elm implementation. Martin confirmed that it's not in the Elm code.
 
-Generators in StreamData create functions that take a seed (it’s called seed, but it’s really :rand.state() ) and keeps track of the next state. Fuzzers in Elm Test take a prng parameter. (see rollDice in https://github.com/elm- explorations/test/blob/master/src/Fuzz.elm) The Random prng in Elm also keeps track of the next seed. *** Maybe that's a key ingredient -- then 
+Generators in StreamData create functions that take a seed (it’s called seed, but it’s really :rand.state() ) and keeps track of the next state. Fuzzers in Elm Test take a prng parameter. (see rollDice in https://github.com/elm-explorations/test/blob/master/src/Fuzz.elm) The Random prng in Elm also keeps track of the next seed. *** Maybe that's a key ingredient -- then 
 **it doesn't matter what calls to :rand are made in other threads if our PRNG is keeping the next seed that it will use.**
 
 Add a Generator behaviour?
