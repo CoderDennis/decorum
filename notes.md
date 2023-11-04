@@ -37,22 +37,27 @@ With no history it needs to use the same seed as ExUnit, which should happen aut
 - [x] Run the test body N times looking for initial failures. N is how many items we take from the generator. N should be configurable, but start with 100.
 - [ ] Add configuration option for how many times to run the test body.
 
-- [ ] PRNG history only needs to be preserved for a single test iteration. In check_all, we don't need the history for the whole 100 test runs. We only need it for one that fails a test.
-Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle. Also raise our own exception type that has good debug output.
+- [ ] PRNG history only needs to be preserved for a single test iteration. In `check_all`, we don't need the history for the whole 100 test runs. We only need it for one that fails a test. However, we do need to use a new seed for each run. How do other implementations handle this?
+
+- [ ] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle. Also raise our own exception type that has good debug output.
 
 - [ ] Run the shrinking challenges (https://github.com/jlink/shrinking-challenge)
+
+### How do we make generators composible? What happens when a property uses more than one generator?
+
+Users should be able to create new generators based on the library generators. This may become clear while implementing the list generator.
 
 ### How long of lists should the list generator produce?
 **StreamData gives lists up to generation size.**
 PropEr also uses an internal increasing size parameter. The sized function in PropCheck is used to get the current size parameter. In StreamData sized is a macro and the scale function is used to add a multiple of the size.
 
-What about the biased coin flip for choosing another item? I don’t understand how the shrinker would know that the pair goes together.
+What about the biased coin flip for choosing another item? I don’t understand how the shrinker would know that the pair goes together. How could this relate to using the size parameter for affecting the length of the generated lists?
 
 Do we need to label chunks of random history the way hypothesis does? I couldn’t find the equivalent in the Elm implementation. Martin confirmed that it's not in the Elm code.
 
 ### What is a Generator?
 
-1. a function that takes in a PRNG struct (and a size?) and returns the next value and an updated PRNG struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that. 
+1. A function that takes in a PRNG struct (and a size?) and returns the next value and an updated PRNG struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that. 
 It could behave like a Stream by default and internally to `check_all` the state could be tracked. The generator function is essentially the same as `next_fun` used by `Stream.unfold`.
 2. A callback that receives 1 or more random integers and returns a value along
 with an atom that signals continuation or halt. Could it be passed in a function that gets the next random number in the event more than one is needed? An init function that returns how many random numbers the callback needs? Then the prng history could be grouped by those chunks. I’m not sure that composes very well. There would be a difference between a primitive generator and one that built on existing generators.
