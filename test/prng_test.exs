@@ -21,7 +21,7 @@ defmodule PRNGTest do
   end
 
   test "random PRNG with the same seed generates the same value" do
-    seed = 5
+    seed = ExUnit.configuration()[:seed]
 
     prng = PRNG.random(seed)
     {value1, _} = PRNG.next(prng)
