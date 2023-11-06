@@ -1,5 +1,5 @@
 defmodule DecorumTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   doctest Decorum
 
   alias Decorum.PRNG
