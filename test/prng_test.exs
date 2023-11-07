@@ -4,7 +4,7 @@ defmodule PRNGTest do
   alias Decorum.PRNG
 
   test "random PRNG preserves history" do
-    {values, prng} = get_values(PRNG.random(ExUnit.configuration()[:seed]), 10)
+    {values, prng} = get_values(PRNG.random(), 10)
 
     history = PRNG.get_history(prng)
 
@@ -12,7 +12,7 @@ defmodule PRNGTest do
   end
 
   test "random PRNG generates different values" do
-    prng = PRNG.random(ExUnit.configuration()[:seed])
+    prng = PRNG.random()
 
     {value1, prng} = PRNG.next(prng)
     {value2, _prng} = PRNG.next(prng)
@@ -20,17 +20,17 @@ defmodule PRNGTest do
     assert value1 != value2
   end
 
-  test "random PRNG with the same seed generates the same value" do
-    seed = ExUnit.configuration()[:seed]
+  # test "random PRNG with the same seed generates the same value" do
+  #   seed = ExUnit.configuration()[:seed]
 
-    prng = PRNG.random(seed)
-    {value1, _} = PRNG.next(prng)
+  #   prng = PRNG.random(seed)
+  #   {value1, _} = PRNG.next(prng)
 
-    prng = PRNG.random(seed)
-    {value2, _} = PRNG.next(prng)
+  #   prng = PRNG.random(seed)
+  #   {value2, _} = PRNG.next(prng)
 
-    assert value1 == value2
-  end
+  #   assert value1 == value2
+  # end
 
   test "hardcoded PRNG replays the given history" do
     history = Enum.to_list(100..150)

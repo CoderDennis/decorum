@@ -24,9 +24,9 @@ defmodule Decorum.PRNG do
 
     @int32 Integer.pow(2, 32)
 
-    @spec new(seed :: non_neg_integer()) :: t
-    def new(seed) do
-      state = :rand.seed(:exsss, {seed, seed, seed})
+    @spec new() :: t
+    def new() do
+      state = :rand.jump()
       %__MODULE__{state: state, history: []}
     end
 
@@ -42,8 +42,10 @@ defmodule Decorum.PRNG do
 
   defmodule Hardcoded do
     @moduledoc false
-    @type t :: %__MODULE__{wholeHistory: Decorum.PRNG.history(),
-    unusedHistory: Decorum.PRNG.history()}
+    @type t :: %__MODULE__{
+            wholeHistory: Decorum.PRNG.history(),
+            unusedHistory: Decorum.PRNG.history()
+          }
 
     @enforce_keys [:wholeHistory, :unusedHistory]
     defstruct [:wholeHistory, :unusedHistory]
@@ -66,8 +68,8 @@ defmodule Decorum.PRNG do
     def get_history(%__MODULE__{wholeHistory: history}), do: history
   end
 
-  @spec random(seed :: non_neg_integer()) :: t()
-  defdelegate random(seed), to: __MODULE__.Random, as: :new
+  @spec random() :: t()
+  defdelegate random(), to: __MODULE__.Random, as: :new
 
   @spec hardcoded(history :: history()) :: t()
   defdelegate hardcoded(history), to: __MODULE__.Hardcoded, as: :new

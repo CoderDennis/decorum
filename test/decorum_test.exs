@@ -20,4 +20,8 @@ defmodule DecorumTest do
       Decorum.check_all(Decorum.pos_integer(), prng, fn x -> assert x < 101 end)
     end
   end
+
+  test "a Decorum struct is Enumerable" do
+    Enum.take(Decorum.pos_integer(), 10)
+  end
 end

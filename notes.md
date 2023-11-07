@@ -21,13 +21,20 @@ but it’s really `:rand.state()`) and keeps track of the next state. Fuzzers in
 The Random prng in Elm also keeps track of the next seed. -- Maybe that's a key ingredient --
 **it doesn't matter what calls to `:rand` are made in other threads if our PRNG is keeping the next seed that it will use.**
 
+PRNG history only needs to be preserved for a single test iteration. In `check_all`, we don't need the history for the whole 100 test runs. We only need it for one that fails a test. 
+However, we do need to use a new seed for each run. How do other implementations handle this? https://github.com/elm-explorations/test/blob/master/src/Test/Fuzz.elm has a `stepSeed` function that gets the seed for the next run. It appears as though `:rand.jump` does the same thing.
+
 ### TODO:
 
 - [x] On prng playback need to distinguish between no history and getting to the end of the history. Tag as :random or :hardcoded ?
 With no history it needs to use the same seed as ExUnit, which should happen automatically. But do we need to be able to specify the seed for internal testing? Make this explicit by passing the seed from ExUnit.configuration()
+
 - [x] Simple replay should be easy to test.
+
 - [ ] Get end to end working with single integer shrinking and then stream of integers. Use these to test prng history shrinking.
-- [ ] Implement Enumerable for Decorum struct using the `stream` function.
+
+- [x] Implement Enumerable protocol for Decorum struct.
+
 - [ ] Implement float generator by copying Elm/Hypothesis implementation. How does it optimize for shrinking? (I initially guessed that it simplified towards 1.0 instead of towards zero, but that wouldn’t produce simpler fractions.) See https://github.com/HypothesisWorks/hypothesis/blob/d55849df92d01a25364aa21a1adb310ee0a3a390/hypothesis-python/src/hypothesis/internal/conjecture/floats.py which was linked to from https://github.com/elm-explorations/test/blob/master/src/Fuzz/Float.elm
 
 - [ ] If rand.uniform is given a range, then shrinking prng history should respect that range. Is there a way to apply the range on an already shrunken random value? Random int in range hi - lo plus lo. Copy from elm implementation because the range could be negative.
@@ -35,9 +42,10 @@ With no history it needs to use the same seed as ExUnit, which should happen aut
 - [ ] When validating a shrunken history need to distinguish between running out of numbers and no longer failing the test. Should be easy to write a test for this. What is the process of rerunning the test and trying further shrinking? It actually seems similar to genetic algorithms. For a given test, this shouldn’t need to be parallelized.
 
 - [x] Run the test body N times looking for initial failures. N is how many items we take from the generator. N should be configurable, but start with 100.
+
 - [ ] Add configuration option for how many times to run the test body.
 
-- [ ] PRNG history only needs to be preserved for a single test iteration. In `check_all`, we don't need the history for the whole 100 test runs. We only need it for one that fails a test. However, we do need to use a new seed for each run. How do other implementations handle this?
+- [ ] Remove `prng` parameter from `check_all` because we need a new one for each test run.
 
 - [ ] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle. Also raise our own exception type that has good debug output.
 
