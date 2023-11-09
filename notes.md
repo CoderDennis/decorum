@@ -27,17 +27,19 @@ However, we do need to use a new seed for each run. How do other implementations
 ### TODO:
 
 - [x] On prng playback need to distinguish between no history and getting to the end of the history. Tag as :random or :hardcoded ?
-With no history it needs to use the same seed as ExUnit, which should happen automatically. But do we need to be able to specify the seed for internal testing? Make this explicit by passing the seed from ExUnit.configuration()
+With no history it needs to use the same seed as ExUnit, which happens automatically because we start with a call to `:rand.jump()`
 
-- [x] Simple replay should be easy to test.
+- [x] Simple history replay should be easy to test.
+
+- [ ] Hanlde getting to the end of prng history. `next/1` can return an `:error` tuple and that needs to bubble up. Or change it to `next!/1` and raise a history empty exception?
 
 - [ ] Get end to end working with single integer shrinking and then stream of integers. Use these to test prng history shrinking.
+
+- [ ] Add support for generating integers larger than 32-bit max. Since PRNG.Random only uses 32-bit integers internally, this requires consuming more than one of them.
 
 - [x] Implement Enumerable protocol for Decorum struct.
 
 - [ ] Implement float generator by copying Elm/Hypothesis implementation. How does it optimize for shrinking? (I initially guessed that it simplified towards 1.0 instead of towards zero, but that wouldn’t produce simpler fractions.) See https://github.com/HypothesisWorks/hypothesis/blob/d55849df92d01a25364aa21a1adb310ee0a3a390/hypothesis-python/src/hypothesis/internal/conjecture/floats.py which was linked to from https://github.com/elm-explorations/test/blob/master/src/Fuzz/Float.elm
-
-- [ ] If rand.uniform is given a range, then shrinking prng history should respect that range. Is there a way to apply the range on an already shrunken random value? Random int in range hi - lo plus lo. Copy from elm implementation because the range could be negative.
 
 - [ ] When validating a shrunken history need to distinguish between running out of numbers and no longer failing the test. Should be easy to write a test for this. What is the process of rerunning the test and trying further shrinking? It actually seems similar to genetic algorithms. For a given test, this shouldn’t need to be parallelized.
 
@@ -59,7 +61,8 @@ Users should be able to create new generators based on the library generators. T
 **StreamData gives lists up to generation size.**
 PropEr also uses an internal increasing size parameter. The sized function in PropCheck is used to get the current size parameter. In StreamData sized is a macro and the scale function is used to add a multiple of the size.
 
-What about the biased coin flip for choosing another item? I don’t understand how the shrinker would know that the pair goes together. How could this relate to using the size parameter for affecting the length of the generated lists?
+What about the biased coin flip for choosing another item? The Elm implementation uses it.
+I don’t understand how the shrinker would know that the pair goes together. How could this relate to using the size parameter for affecting the length of the generated lists?
 
 Do we need to label chunks of random history the way hypothesis does? I couldn’t find the equivalent in the Elm implementation. Martin confirmed that it's not in the Elm code.
 

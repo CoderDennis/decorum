@@ -55,39 +55,149 @@ defmodule Decorum do
   ## Generators
 
   @doc """
-  Creates a simple Decorum struct with a generator that just outputs the values
-  it gets from the prng.
+  Creates a simple generator that outputs the values it gets from the prng.
 
   Values will be 32-bit positive integers.
   """
-  def pos_integer() do
-    Decorum.new(fn prng -> PRNG.next(prng) end)
+  @spec prng_values() :: t(non_neg_integer)
+  def prng_values() do
+    new(fn prng -> PRNG.next(prng) end)
+  end
+
+  @doc """
+  Create a generator that is not random and always returns the same value.
+  """
+  @spec constant(a) :: t(a) when a: term()
+  def constant(value) do
+    new(fn prng -> {value, prng} end)
+  end
+
+  @doc """
+  Generates integers in the given range.
+
+  Range handling borrowed from StreamData
+
+  Shrinks toward zero within the range.
+  """
+  @spec integer(Range.t()) :: t(integer())
+  def integer(%Range{first: low, last: high, step: step} = _range) when high < low do
+    integer(high..low//step)
+  end
+
+  def integer(%Range{first: value, last: value} = _range) do
+    constant(value)
+  end
+
+  def integer(%Range{first: low, last: high, step: 1} = _range) when low >= 0 do
+    # high and low are both non-negative.
+    uniform_integer(high - low)
+    |> map(fn n -> n + low end)
+  end
+
+  def integer(%Range{first: low, last: high, step: 1} = _range) when high <= 0 do
+    # high and low are both negative and we still want to shrink toward zero.
+    uniform_integer(high - low)
+    |> map(fn n -> n * -1 + high end)
+  end
+
+  def integer(%Range{first: low, last: high, step: 1} = _range) do
+    # high >= 1 and low <= -1 and we still want to shrink toward zero.
+    one_of([
+      integer(0..high),
+      integer(low..-1)
+    ])
+  end
+
+  def integer(%Range{first: low, last: high, step: step} = _range) do
+    low_stepless = Integer.floor_div(low, step)
+    high_stepless = Integer.floor_div(high, step)
+
+    integer(low_stepless..high_stepless)
+    |> map(fn value -> value * step end)
+  end
+
+  @doc """
+  Randomly selects one of the given generators.
+
+  `generators` must be a list.
+  """
+  @spec one_of([t(a)]) :: t(a) when a: term()
+  def one_of([]) do
+    raise "one_of needs at least one item"
+  end
+
+  def one_of([generator]) do
+    generator
+  end
+
+  def one_of(generators) do
+    generators = List.to_tuple(generators)
+
+    (tuple_size(generators) - 1)
+    |> uniform_integer()
+    |> and_then(fn index -> elem(generators, index) end)
+  end
+
+  @doc """
+  Generates an integer between 0 and max.
+
+  Currently only supports 32-bit values and is not truly uniform.
+  """
+  @spec uniform_integer(non_neg_integer()) :: t(non_neg_integer())
+  def uniform_integer(max) do
+    new(fn prng ->
+      {value, prng} = PRNG.next(prng)
+      {rem(value, max + 1), prng}
+    end)
+  end
+
+  ## Helpers
+
+  @doc """
+
+  In StreamData this funciton is called `bind`.
+  """
+  @spec and_then(t(a), (a -> t(b))) :: t(b) when a: term(), b: term()
+  def and_then(%Decorum{generator: generator}, fun) when is_function(fun, 1) do
+    new(fn prng ->
+      {value, prng} = generator.(prng)
+      %Decorum{generator: generator_b} = fun.(value)
+      generator_b.(prng)
+    end)
+  end
+
+  @spec map(t(a), (a -> b)) :: t(b) when a: term(), b: term()
+  def map(%Decorum{generator: generator}, fun) when is_function(fun, 1) do
+    new(fn prng ->
+      {value, prng} = generator.(prng)
+      {fun.(value), prng}
+    end)
   end
 
   ## Enumerable
 
   defimpl Enumerable do
-    def reduce(data, acc, fun) do
-      reduce(data, acc, fun, PRNG.random())
+    def reduce(decorum, acc, fun) do
+      reduce(decorum, acc, fun, PRNG.random())
     end
 
-    defp reduce(_data, {:halt, acc}, _fun, _prng) do
+    defp reduce(_decorum, {:halt, acc}, _fun, _prng) do
       {:halted, acc}
     end
 
-    defp reduce(data, {:suspend, acc}, fun, prng) do
-      {:suspended, acc, &reduce(data, &1, fun, prng)}
+    defp reduce(decorum, {:suspend, acc}, fun, prng) do
+      {:suspended, acc, &reduce(decorum, &1, fun, prng)}
     end
 
-    defp reduce(%Decorum{generator: generator} = data, {:cont, acc}, fun, prng) do
+    defp reduce(%Decorum{generator: generator} = decorum, {:cont, acc}, fun, prng) do
       {value, prng} = generator.(prng)
-      reduce(data, fun.(value, acc), fun, prng)
+      reduce(decorum, fun.(value, acc), fun, prng)
     end
 
-    def count(_data), do: {:error, __MODULE__}
+    def count(_decorum), do: {:error, __MODULE__}
 
-    def member?(_data, _term), do: {:error, __MODULE__}
+    def member?(_decorum, _term), do: {:error, __MODULE__}
 
-    def slice(_data), do: {:error, __MODULE__}
+    def slice(_decorum), do: {:error, __MODULE__}
   end
 end

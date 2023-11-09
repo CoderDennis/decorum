@@ -13,15 +13,55 @@ defmodule DecorumTest do
       assert_raise ExUnit.AssertionError,
                    ~r/Assertion with < failed, both sides are exactly equal/,
                    fn ->
-                     Decorum.check_all(Decorum.pos_integer(), prng, fn x -> assert x < 100 end)
+                     Decorum.check_all(Decorum.prng_values(), prng, fn x -> assert x < 100 end)
                    end
 
       # check that the value 101 is not used
-      Decorum.check_all(Decorum.pos_integer(), prng, fn x -> assert x < 101 end)
+      Decorum.check_all(Decorum.prng_values(), prng, fn x -> assert x < 101 end)
     end
   end
 
   test "a Decorum struct is Enumerable" do
-    Enum.take(Decorum.pos_integer(), 10)
+    Enum.take(Decorum.prng_values(), 10)
+  end
+
+  describe "Generators" do
+    test "map" do
+      prng = PRNG.hardcoded(Enum.to_list(1..3))
+
+      values =
+        Decorum.map(Decorum.prng_values(), fn x -> x * 2 end)
+        |> Decorum.stream(prng)
+        |> Enum.take(3)
+
+      assert values == [2, 4, 6]
+    end
+
+    test "property uniform_integer does not produce numbers greater than given max" do
+      prng = PRNG.random()
+
+      Decorum.check_all(Decorum.prng_values(), prng, fn max ->
+        randomInt = Decorum.uniform_integer(max)
+        assert randomInt |> Enum.take(10) |> Enum.all?(fn x -> x <= max end)
+      end)
+    end
+
+    test "uniform_integer with max zero only produces zeros" do
+      max_zero = Decorum.uniform_integer(0)
+      assert max_zero |> Enum.take(10) |> Enum.all?(fn x -> x == 0 end)
+    end
+
+    test "uniform_integer with max 1 produces some zeros and some ones" do
+      max_one = Decorum.uniform_integer(1) |> Enum.take(100) |> Enum.to_list()
+      assert max_one |> Enum.any?(fn x -> x == 0 end)
+      assert max_one |> Enum.any?(fn x -> x == 1 end)
+    end
+
+    test "integer with range from negative to positive produces some negative and some positive integers" do
+      range = Decorum.integer(-1..1) |> Enum.take(100) |> Enum.to_list()
+
+      assert range |> Enum.any?(fn x -> x > 0 end)
+      assert range |> Enum.any?(fn x -> x < 0 end)
+    end
   end
 end
