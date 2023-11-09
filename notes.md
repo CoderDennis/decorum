@@ -1,4 +1,7 @@
-This is a copy of my thoughts and notes while investigating how this library should be implemented. I'm including it in the repo to preserve revision history as I find answers to my own questions and evolve the design.
+These are my thoughts and notes while investigating how this library should be implemented.
+I'm including it in the repo to preserve revision history as I find answers to my own questions and evolve the design.
+
+References to Martin are refering to Martin Janiczek. I first learned about the Hypothesis form of shrinking from this YouTube video https://youtu.be/WE5bmt0zBxg?si=fyg6R_O3iRrbuc7_ He also implemented this in elm-test.
 
 Elixir Outlaws ep 2 has a good quote. Something like “shrinking is the real magic of property based testing.” Ep 4 also talks about prop testing and a debate around StreamData being included in Elixir core.
 
@@ -33,7 +36,15 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [ ] Hanlde getting to the end of prng history. `next/1` can return an `:error` tuple and that needs to bubble up. Or change it to `next!/1` and raise a history empty exception?
 
-- [ ] Get end to end working with single integer shrinking and then stream of integers. Use these to test prng history shrinking.
+- [ ] When validating a shrunken history need to distinguish between running out of numbers and no longer failing the test. Should be easy to write a test for this. What is the process of rerunning the test and trying further shrinking? It actually seems similar to genetic algorithms. For a given test, this shouldn’t need to be parallelized.
+
+- [ ] Remove `prng` parameter from `check_all` because we need a new one for each test run. Or make it optional.
+
+- [ ] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle. Also raise our own exception type that has good debug output.
+
+- [ ] Get end to end with shrinking working with single integer generator.
+
+- [ ] Add `list_of` with shrinking on a list of integers. Use "list is sorted" as the property which should shrink to `[1,0]`.
 
 - [ ] Add support for generating integers larger than 32-bit max. Since PRNG.Random only uses 32-bit integers internally, this requires consuming more than one of them.
 
@@ -41,15 +52,10 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [ ] Implement float generator by copying Elm/Hypothesis implementation. How does it optimize for shrinking? (I initially guessed that it simplified towards 1.0 instead of towards zero, but that wouldn’t produce simpler fractions.) See https://github.com/HypothesisWorks/hypothesis/blob/d55849df92d01a25364aa21a1adb310ee0a3a390/hypothesis-python/src/hypothesis/internal/conjecture/floats.py which was linked to from https://github.com/elm-explorations/test/blob/master/src/Fuzz/Float.elm
 
-- [ ] When validating a shrunken history need to distinguish between running out of numbers and no longer failing the test. Should be easy to write a test for this. What is the process of rerunning the test and trying further shrinking? It actually seems similar to genetic algorithms. For a given test, this shouldn’t need to be parallelized.
 
 - [x] Run the test body N times looking for initial failures. N is how many items we take from the generator. N should be configurable, but start with 100.
 
 - [ ] Add configuration option for how many times to run the test body.
-
-- [ ] Remove `prng` parameter from `check_all` because we need a new one for each test run.
-
-- [ ] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle. Also raise our own exception type that has good debug output.
 
 - [ ] Run the shrinking challenges (https://github.com/jlink/shrinking-challenge)
 
@@ -77,15 +83,22 @@ I've chosen option 1.
 
 ### Is there a better syntax for defining property tests in Elixir?
 
-**Prefer StreamData syntax for macros like `check all`** instead of PropCheck (and PropEr) syntax of `forall`? Yes.
+**Prefer StreamData syntax for macros like `check all`** instead of PropCheck (and PropEr) syntax of `forall`.
 
 Body of `check all` uses asserts. Body of `forall` returns boolean. Using asserts seems more like what a user of ExUnit would be familiar with.
 
-Is there a way to do it inside the test macro instead of using a property macro? Or just making the property macro the only thing that’s needed? Why require a macro inside the body of another macro? From https://github.com/whatyouhide/stream_data/blob/main/lib/ex_unit_properties.ex it looks like 
+Is there a way to do it inside the test macro instead of using a property macro? Or just making the property macro the only thing that’s needed? Why require a macro inside the body of another macro?
+From https://github.com/whatyouhide/stream_data/blob/main/lib/ex_unit_properties.ex it looks like 
 **the property macro is a convenience for marking tests as properties.**
 
 ### Other thoughts or questions
 
-In Elm implementation Fuzz.elm, why does forcedChoice need to consume a random number? How is that different from constant? Martin confirmed that throwing an error instead of just accepting it may not be right.
+In Elm implementation Fuzz.elm, why does forcedChoice need to consume a random number? How is that different from constant?
+Martin confirmed that throwing an error instead of just accepting it may not be right.
 
-I considered setting up property test macros and using them to build up tests for the system, but I'm not sure that would help. What properties do we test for generators or shrinking? 
+I considered setting up property test macros and using them to build up tests for the system, but I'm not sure that would help.
+Just use `check_all` directly without the macros. Add macros later.
+
+How important is it for `Decorum.uniform_integer/1` to produce uniformly random values?
+I tried the code from https://rosettacode.org/wiki/Verify_distribution_uniformity/Chi-squared_test and its `chi2IsUniform/2` function returned false for all the examples I ran.
+The `chi2Probability/2` results were around `1.69e-13` when they were expected to be greater than `0.05`.

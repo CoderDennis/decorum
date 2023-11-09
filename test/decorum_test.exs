@@ -21,8 +21,10 @@ defmodule DecorumTest do
     end
   end
 
-  test "a Decorum struct is Enumerable" do
-    Enum.take(Decorum.prng_values(), 10)
+  describe "Enumerable" do
+    test "a Decorum struct works with the Enum module" do
+      Enum.take(Decorum.prng_values(), 10)
+    end
   end
 
   describe "Generators" do
@@ -62,6 +64,20 @@ defmodule DecorumTest do
 
       assert range |> Enum.any?(fn x -> x > 0 end)
       assert range |> Enum.any?(fn x -> x < 0 end)
+    end
+  end
+
+  describe "Shrinking" do
+    test "an integer mapped to multiples of 100 shrinks correctly" do
+      prng = PRNG.random()
+
+      assert_raise ExUnit.AssertionError,
+                   ~r/left:  400/,
+                   fn ->
+                     0..9000//100
+                     |> Decorum.integer()
+                     |> Decorum.check_all(prng, fn x -> assert x < 321 end)
+                   end
     end
   end
 end
