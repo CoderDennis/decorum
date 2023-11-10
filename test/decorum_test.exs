@@ -68,7 +68,7 @@ defmodule DecorumTest do
   end
 
   describe "Shrinking" do
-    test "an integer mapped to multiples of 100 shrinks correctly" do
+    test "an integer that is a multiple of 100 shrinks to 400 when asserting that it is less than 321" do
       prng = PRNG.random()
 
       assert_raise ExUnit.AssertionError,

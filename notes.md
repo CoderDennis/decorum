@@ -5,12 +5,20 @@ References to Martin are refering to Martin Janiczek. I first learned about the 
 
 Elixir Outlaws ep 2 has a good quote. Something like “shrinking is the real magic of property based testing.” Ep 4 also talks about prop testing and a debate around StreamData being included in Elixir core.
 
-### Use 32-bit integers for PRNG history.
+### Internal representation of PRNG history.
 
-Should the history store floats from :rand.uniform() or should it store integers? I thought it should store 64 bit unsigned integers because those can easily be shrunk by dividing by 2 or subtracting 1. And float (see below) is defined as an interpretation of 64 bits. Will the integer generator ever need to produce integers larger than 64 bits?
-Would 32 bit integers work? Floats would consume 2 of them as in the Elm implementation. If a larger range was requested, then take 2 or more of them? What is the internal representation of integers in the BEAM? Small integer is 1 word (60 bits on 64-bit architecture) See https://www.erlang.org/doc/efficiency_guide/advanced.html
+We're currently using a list of 32-bit integers, which is the same as the Elm implementation.
+
+Unsigned Integers work best because they shrink easily by dividing by 2 or subtracting 1.
+
+What is the internal representation of integers in the BEAM? Small integer is 1 word (60 bits on 64-bit architecture) See https://www.erlang.org/doc/efficiency_guide/advanced.html
 
 What effect does size of integer stored in PRNG history have on the rand algorithm used? If only storing 32-bit ints, then it doesn't matter.
+
+- [ ] Should we use a bytes as is done in Hypothesis? 
+No matter what size ints we store, when a larger value is requested, we need to use more than one of them.
+
+Using smaller integers might make it more important to label chunks of random history the way hypothesis does. I couldn’t find the equivalent in the Elm implementation. Martin confirmed that it's not in the Elm code.
 
 ### How is `:rand` thread safe when running ExUnit async true?
 
@@ -46,7 +54,7 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [ ] Add `list_of` with shrinking on a list of integers. Use "list is sorted" as the property which should shrink to `[1,0]`.
 
-- [ ] Add support for generating integers larger than 32-bit max. Since PRNG.Random only uses 32-bit integers internally, this requires consuming more than one of them.
+- [ ] Add support for generating integers larger than the internal representation of the PRNG history which is currently a 32-bit integer. This requires consuming more than one value. The `next` funciton probably needs a byte_count parameter.
 
 - [x] Implement Enumerable protocol for Decorum struct.
 
@@ -70,16 +78,31 @@ PropEr also uses an internal increasing size parameter. The sized function in Pr
 What about the biased coin flip for choosing another item? The Elm implementation uses it.
 I don’t understand how the shrinker would know that the pair goes together. How could this relate to using the size parameter for affecting the length of the generated lists?
 
-Do we need to label chunks of random history the way hypothesis does? I couldn’t find the equivalent in the Elm implementation. Martin confirmed that it's not in the Elm code.
-
 ### What is a Generator?
 
-1. A function that takes in a PRNG struct (and a size?) and returns the next value and an updated PRNG struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that. 
+A function that takes in a PRNG struct (and a size?) and returns the next value and an updated PRNG struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that. 
 It could behave like a Stream by default and internally to `check_all` the state could be tracked. The generator function is essentially the same as `next_fun` used by `Stream.unfold`.
-2. A callback that receives 1 or more random integers and returns a value along
-with an atom that signals continuation or halt. Could it be passed in a function that gets the next random number in the event more than one is needed? An init function that returns how many random numbers the callback needs? Then the prng history could be grouped by those chunks. I’m not sure that composes very well. There would be a difference between a primitive generator and one that built on existing generators.
 
-I've chosen option 1.
+### What is a Shrinker?
+
+A function that takes a PRNG history and a test function and searches through a stream of shortlex smaller histories.
+
+Iterate through those histories until:
+- A. we find one that still fails the test
+- B. We run out of possible smaller histories
+- C. We try some maximum number of times.
+
+How does it find possible smaller histories? By using some set of strategies or passes?
+
+When it finds a valid smaller history, then starts over with that one?
+
+Individually shrink integers. Try zero, divide by 2, subtract 1, and removing from history. Do we need to keep track of values we’ve used? Might be important to avoid retrying zero a bunch of times.
+
+Do we shrink the first value and then shrink the rest of the history?
+
+Only feed used history into next round of shrinking? Discard unused values at the end of history.
+
+Storing larger integers might make shrinking less efficient because it takes longer to reach low values. 
 
 ### Is there a better syntax for defining property tests in Elixir?
 
