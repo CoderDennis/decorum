@@ -33,7 +33,10 @@ The Random prng in Elm also keeps track of the next seed. -- Maybe that's a key 
 **it doesn't matter what calls to `:rand` are made in other threads if our PRNG is keeping the next seed that it will use.**
 
 PRNG history only needs to be preserved for a single test iteration. In `check_all`, we don't need the history for the whole 100 test runs. We only need it for one that fails a test. 
-However, we do need to use a new seed for each run. How do other implementations handle this? https://github.com/elm-explorations/test/blob/master/src/Test/Fuzz.elm has a `stepSeed` function that gets the seed for the next run. It appears as though `:rand.jump` does the same thing.
+However, we do need to use a new seed for each run. How do other implementations handle this? https://github.com/elm-explorations/test/blob/master/src/Test/Fuzz.elm has a `stepSeed` function that gets the seed for the next run.
+We can use `:rand.jump()` for the same purpose.
+
+It's important to not specify a new seed so that we're based on the one ExUnit sets up automatically.
 
 ### TODO:
 
@@ -42,15 +45,17 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [x] Simple history replay should be easy to test.
 
-- [ ] Hanlde getting to the end of prng history. `next/1` can return an `:error` tuple and that needs to bubble up. Or change it to `next!/1` and raise a history empty exception?
+- [x] Hanlde getting to the end of prng history. Change `next/1` to `next!/1` and raise EmptyHistoryError.
 
 - [ ] When validating a shrunken history need to distinguish between running out of numbers and no longer failing the test. Should be easy to write a test for this. What is the process of rerunning the test and trying further shrinking? It actually seems similar to genetic algorithms. For a given test, this shouldn’t need to be parallelized.
 
-- [ ] Remove `prng` parameter from `check_all` because we need a new one for each test run. Or make it optional.
+- [x] Remove `prng` parameter from `check_all` because we need a new one for each test run. Or make it optional.
 
-- [ ] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle. Also raise our own exception type that has good debug output.
+- [x] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle.
 
-- [ ] Get end to end with shrinking working with single integer generator.
+- [ ] Raise our own exception type that has good debug output.
+
+- [x] Get end to end with shrinking working with single integer generator.
 
 - [ ] Add `list_of` with shrinking on a list of integers. Use "list is sorted" as the property which should shrink to `[1,0]`.
 
@@ -64,6 +69,10 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 - [x] Run the test body N times looking for initial failures. N is how many items we take from the generator. N should be configurable, but start with 100.
 
 - [ ] Add configuration option for how many times to run the test body.
+
+- [ ] Rename PRNG module to Random?
+I don’t love the name PRNG.
+Maybe flatten the structure while keeping `random/0` and `hardcoded/1` constructor functions.
 
 - [ ] Run the shrinking challenges (https://github.com/jlink/shrinking-challenge)
 
@@ -85,7 +94,7 @@ It could behave like a Stream by default and internally to `check_all` the state
 
 ### What is a Shrinker?
 
-A function that takes a PRNG history and a test function and searches through a stream of shortlex smaller histories.
+A function that takes a PRNG history, a generator, and a test function and searches through a stream of shortlex smaller histories.
 
 Iterate through those histories until:
 - A. we find one that still fails the test

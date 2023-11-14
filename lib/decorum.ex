@@ -31,25 +31,76 @@ defmodule Decorum do
   end
 
   @doc """
-  `check_all` takes a Decorum struct and a PRNG struct and runs `body_fn`
+  `check_all` takes a Decorum struct and runs `test_fn`
   against the generated values.
 
   This funciton will expand and eventually be called by a macro, but for now it's part
   of bootsrtapping the property testing functionality.
 
-  `body_fn` should behaive like a normal ExUnit test. It throws an error if a test fails.
+  `test_fn` should behaive like a normal ExUnit test. It throws an error if a test fails.
   Use the assert or other test helper macros inside that function.
 
   TODO: Create a Decorum.Error and raise that instead of ExUnit.AssertionError.
   """
-  @spec check_all(t(a), PRNG.t(), (a -> nil)) :: :ok when a: term()
-  def check_all(decorum, prng, body_fn) do
-    decorum
-    |> stream(prng)
-    |> Enum.take(100)
-    |> Enum.each(fn value ->
-      body_fn.(value)
+  @spec check_all(t(a), (a -> nil)) :: :ok when a: term()
+  def check_all(%__MODULE__{generator: generator}, test_fn) do
+    1..100
+    |> Enum.each(fn _ ->
+      {value, prng} = generator.(PRNG.random())
+
+      try do
+        test_fn.(value)
+      rescue
+        exception ->
+          try do
+            shrink(PRNG.get_history(prng), generator, test_fn)
+          rescue
+            shrunk_exception ->
+              reraise shrunk_exception, __STACKTRACE__
+          else
+            _ -> reraise exception, __STACKTRACE__
+          end
+      end
     end)
+  end
+
+  defp shrink([], _generator, _test_fn), do: :ok
+
+  defp shrink(history, generator, test_fn) do
+    history
+    |> shrink()
+    |> Enum.take(200)
+    |> Enum.reduce_while(0, fn hist, _ ->
+      {value, _} = generator.(PRNG.hardcoded(hist))
+
+      try do
+        test_fn.(value)
+        {:cont, :ok}
+      rescue
+        Decorum.PRNG.EmptyHistoryError ->
+          {:halt, :ok}
+
+        exception ->
+          try do
+            {:halt, shrink(hist, generator, test_fn)}
+          rescue
+            shrunk_exception ->
+              reraise shrunk_exception, __STACKTRACE__
+          else
+            _ -> reraise exception, __STACKTRACE__
+          end
+      end
+    end)
+  end
+
+  defp shrink([]), do: []
+
+  defp shrink([0 | t]), do: shrink(t)
+
+  defp shrink([h | t] = _history) do
+    div_2 = div(h, 2)
+    sub_1 = h - 1
+    [[div_2 | t], [sub_1 | t] | shrink([div_2 | t])]
   end
 
   ## Generators
@@ -61,7 +112,7 @@ defmodule Decorum do
   """
   @spec prng_values() :: t(non_neg_integer)
   def prng_values() do
-    new(fn prng -> PRNG.next(prng) end)
+    new(fn prng -> PRNG.next!(prng) end)
   end
 
   @doc """
@@ -141,12 +192,13 @@ defmodule Decorum do
   @doc """
   Generates an integer between 0 and max.
 
-  Currently only supports 32-bit values and is not truly uniform.
+  Currently only supports 32-bit values and is not truly uniform as the use of `rem`
+  has a bias towards producing smaller numbers.
   """
   @spec uniform_integer(non_neg_integer()) :: t(non_neg_integer())
   def uniform_integer(max) do
     new(fn prng ->
-      {value, prng} = PRNG.next(prng)
+      {value, prng} = PRNG.next!(prng)
       {rem(value, max + 1), prng}
     end)
   end

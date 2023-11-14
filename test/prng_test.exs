@@ -14,8 +14,8 @@ defmodule PRNGTest do
   test "random PRNG generates different values" do
     prng = PRNG.random()
 
-    {value1, prng} = PRNG.next(prng)
-    {value2, _prng} = PRNG.next(prng)
+    {value1, prng} = PRNG.next!(prng)
+    {value2, _prng} = PRNG.next!(prng)
 
     assert value1 != value2
   end
@@ -24,10 +24,10 @@ defmodule PRNGTest do
   #   seed = ExUnit.configuration()[:seed]
 
   #   prng = PRNG.random(seed)
-  #   {value1, _} = PRNG.next(prng)
+  #   {value1, _} = PRNG.next!(prng)
 
   #   prng = PRNG.random(seed)
-  #   {value2, _} = PRNG.next(prng)
+  #   {value2, _} = PRNG.next!(prng)
 
   #   assert value1 == value2
   # end
@@ -40,19 +40,19 @@ defmodule PRNGTest do
     assert history == values
   end
 
-  test "hardcoded PRNG returns :error when empty" do
+  test "hardcoded PRNG raises EmptyHistoryError when empty" do
     history = [1]
 
     prng = PRNG.hardcoded(history)
-    {1, prng} = PRNG.next(prng)
-    {:error, _} = PRNG.next(prng)
+    {1, prng} = PRNG.next!(prng)
+    assert_raise Decorum.PRNG.EmptyHistoryError, fn -> PRNG.next!(prng) end
   end
 
   @spec get_values(prng :: PRNG.t(), count :: non_neg_integer()) :: {non_neg_integer(), PRNG.t()}
   def get_values(prng, count) do
     0..count
     |> Enum.reduce({[], prng}, fn _, {list, prng} ->
-      {value, new_prng} = PRNG.next(prng)
+      {value, new_prng} = PRNG.next!(prng)
       {list ++ [value], new_prng}
     end)
   end

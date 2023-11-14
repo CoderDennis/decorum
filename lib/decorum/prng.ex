@@ -15,6 +15,11 @@ defmodule Decorum.PRNG do
   @type prng :: __MODULE__.Random.t() | __MODULE__.Hardcoded.t()
   @type history :: list(non_neg_integer())
 
+  defmodule EmptyHistoryError do
+    @moduledoc false
+    defexception [:message]
+  end
+
   defmodule Random do
     @moduledoc false
     @type t :: %__MODULE__{state: :rand.state(), history: Decorum.PRNG.history()}
@@ -30,8 +35,8 @@ defmodule Decorum.PRNG do
       %__MODULE__{state: state, history: []}
     end
 
-    @spec next(prng :: t()) :: {non_neg_integer(), t}
-    def next(%__MODULE__{state: state, history: history} = prng) do
+    @spec next!(prng :: t()) :: {non_neg_integer(), t}
+    def next!(%__MODULE__{state: state, history: history} = prng) do
       {value, new_state} = :rand.uniform_s(@int32, state)
       {value, %__MODULE__{prng | state: new_state, history: [value | history]}}
     end
@@ -55,12 +60,12 @@ defmodule Decorum.PRNG do
       %__MODULE__{wholeHistory: history, unusedHistory: history}
     end
 
-    @spec next(prng :: t()) :: {non_neg_integer() | :error, t()}
-    def next(%__MODULE__{unusedHistory: []} = prng) do
-      {:error, prng}
+    @spec next!(prng :: t()) :: {non_neg_integer(), t()}
+    def next!(%__MODULE__{unusedHistory: []} = _prng) do
+      raise EmptyHistoryError, "PRNG history is empty"
     end
 
-    def next(%__MODULE__{unusedHistory: [value | rest]} = prng) do
+    def next!(%__MODULE__{unusedHistory: [value | rest]} = prng) do
       {value, %__MODULE__{prng | unusedHistory: rest}}
     end
 
@@ -74,9 +79,9 @@ defmodule Decorum.PRNG do
   @spec hardcoded(history :: history()) :: t()
   defdelegate hardcoded(history), to: __MODULE__.Hardcoded, as: :new
 
-  @spec next(prng :: t()) :: {non_neg_integer() | :error, t()}
-  def next(%__MODULE__.Random{} = prng), do: __MODULE__.Random.next(prng)
-  def next(%__MODULE__.Hardcoded{} = prng), do: __MODULE__.Hardcoded.next(prng)
+  @spec next!(prng :: t()) :: {non_neg_integer(), t()}
+  def next!(%__MODULE__.Random{} = prng), do: __MODULE__.Random.next!(prng)
+  def next!(%__MODULE__.Hardcoded{} = prng), do: __MODULE__.Hardcoded.next!(prng)
 
   @spec get_history(prng :: t()) :: history()
   def get_history(%__MODULE__.Random{} = prng), do: __MODULE__.Random.get_history(prng)
