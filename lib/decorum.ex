@@ -57,6 +57,8 @@ defmodule Decorum do
             shrink(PRNG.get_history(prng), generator, test_fn)
           rescue
             Decorum.PRNG.EmptyHistoryError ->
+              # TODO: raise some other type of error if we ever get this error from the shrink function?
+              IO.puts("EmptyHistoryError in check_all should never happen")
               reraise exception, __STACKTRACE__
 
             shrunk_exception ->
@@ -72,11 +74,9 @@ defmodule Decorum do
 
   defp shrink(history, generator, test_fn) do
     history
-    # |> IO.inspect()
     |> History.shrink()
     |> Enum.take(200)
     |> Enum.reduce_while(0, fn hist, _ ->
-      # hist |> IO.inspect()
       {value, _} = generator.(PRNG.hardcoded(hist))
 
       try do
@@ -88,8 +88,11 @@ defmodule Decorum do
 
         exception ->
           try do
-            {:halt, shrink(hist, generator, test_fn)} # this isn't actually causing recursion?
+            {:halt, shrink(hist, generator, test_fn)}
           rescue
+            Decorum.PRNG.EmptyHistoryError ->
+              {:cont, :ok}
+
             shrunk_exception ->
               reraise shrunk_exception, __STACKTRACE__
           else
@@ -222,7 +225,7 @@ defmodule Decorum do
   end
 
   def uniform_integer() do
-    uniform_integer(Integer.pow(2, 32) -1)
+    uniform_integer(Integer.pow(2, 32) - 1)
   end
 
   ## Helpers

@@ -4,9 +4,7 @@ defmodule Decorum.History do
   @doc """
   Takes a PRNG history and shrinks it to smaller values.
 
-  Smaller is defined as shorter or in lower sort order.
-
-  TODO: this needs to be a lazy stream
+  Smaller is defined as shorter or lower sort order.
   """
   @spec shrink(t()) :: Enumerable.t(t())
   def shrink([]), do: []
@@ -18,15 +16,17 @@ defmodule Decorum.History do
 
   def shrink(history) do
     Stream.concat(
-      [history],
-      shrink_length(history)
+      shrink_length(history),
+      shrink_values(history)
     )
-    |> Enum.flat_map(&shrink_values/1)
   end
 
+  @doc """
+  Removes 2 items at a time. Should be expanded to remove varying sized chunks.
+  """
   defp shrink_length(history) do
     Stream.unfold(history, fn
-      [_h, h2 | t] -> {[h2 | t], [h2 | t]}
+      [_h, _h2, h3 | t] -> {[h3 | t], [h3 | t]}
       _ -> nil
     end)
   end
@@ -60,7 +60,7 @@ defmodule Decorum.History do
   @doc """
   Shrinks a single integer into smaller possible values.
 
-  Order of values is not guaranteed, but 0 should be the first result.
+  Order of values is not guaranteed, but 0 is the first result.
   """
   @spec shrink_int(non_neg_integer()) :: Enumerable.t(non_neg_integer())
   def shrink_int(0), do: []

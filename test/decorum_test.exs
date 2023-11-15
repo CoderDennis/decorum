@@ -61,7 +61,7 @@ defmodule DecorumTest do
 
     test "a list of integers shrinks to [1,0] when asserting that the list is sorted" do
       assert_raise ExUnit.AssertionError,
-                   ~r/left:  [1,0]/,
+                   ~r/left:  \[1, 0\]/,
                    fn ->
                      Decorum.uniform_integer(50_000)
                      |> Decorum.list_of()

@@ -57,7 +57,9 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [x] Get end to end with shrinking working with single integer generator.
 
-- [ ] Add `list_of` with shrinking on a list of integers. Use "list is sorted" as the property which should shrink to `[1,0]`.
+- [x] Add `list_of` with shrinking on a list of integers. Use "list is sorted" as the property which should shrink to `[1,0]`.
+
+- [ ] Change `History.shrink_length/1` to remove one item at a time and fix the resulting error.
 
 - [ ] Add support for generating integers larger than the internal representation of the PRNG history which is currently a 32-bit integer. This requires consuming more than one value. The `next` funciton probably needs a byte_count parameter.
 

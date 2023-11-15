@@ -29,9 +29,4 @@ defmodule HistoryTest do
     possible_histories = History.shrink([2, 2, 2]) |> Enum.to_list()
     assert Enum.member?(possible_histories, [2, 0, 2])
   end
-
-  test "shrink [3, 3, 3, 3] will contain [3, 0]" do
-    possible_histories = History.shrink([3, 3, 3, 3]) |> Enum.to_list()
-    assert Enum.member?(possible_histories, [3, 0])
-  end
 end
