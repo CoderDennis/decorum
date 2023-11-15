@@ -13,7 +13,6 @@ defmodule Decorum.PRNG do
 
   @type t :: prng
   @type prng :: __MODULE__.Random.t() | __MODULE__.Hardcoded.t()
-  @type history :: list(non_neg_integer())
 
   defmodule EmptyHistoryError do
     @moduledoc false
@@ -22,7 +21,7 @@ defmodule Decorum.PRNG do
 
   defmodule Random do
     @moduledoc false
-    @type t :: %__MODULE__{state: :rand.state(), history: Decorum.PRNG.history()}
+    @type t :: %__MODULE__{state: :rand.state(), history: Decorum.History.t()}
 
     @enforce_keys [:state, :history]
     defstruct [:state, :history]
@@ -41,21 +40,21 @@ defmodule Decorum.PRNG do
       {value, %__MODULE__{prng | state: new_state, history: [value | history]}}
     end
 
-    @spec get_history(prng :: t()) :: Decorum.PRNG.history()
+    @spec get_history(prng :: t()) :: Decorum.History.t()
     def get_history(%__MODULE__{history: history}), do: Enum.reverse(history)
   end
 
   defmodule Hardcoded do
     @moduledoc false
     @type t :: %__MODULE__{
-            wholeHistory: Decorum.PRNG.history(),
-            unusedHistory: Decorum.PRNG.history()
+            wholeHistory: Decorum.History.t(),
+            unusedHistory: Decorum.History.t()
           }
 
     @enforce_keys [:wholeHistory, :unusedHistory]
     defstruct [:wholeHistory, :unusedHistory]
 
-    @spec new(history :: Decorum.PRNG.history()) :: t
+    @spec new(history :: Decorum.History.t()) :: t
     def new(history) when is_list(history) do
       %__MODULE__{wholeHistory: history, unusedHistory: history}
     end
@@ -69,21 +68,21 @@ defmodule Decorum.PRNG do
       {value, %__MODULE__{prng | unusedHistory: rest}}
     end
 
-    @spec get_history(prng :: t()) :: Decorum.PRNG.history()
+    @spec get_history(prng :: t()) :: Decorum.History.t()
     def get_history(%__MODULE__{wholeHistory: history}), do: history
   end
 
   @spec random() :: t()
   defdelegate random(), to: __MODULE__.Random, as: :new
 
-  @spec hardcoded(history :: history()) :: t()
+  @spec hardcoded(history :: Decorum.History.t()) :: t()
   defdelegate hardcoded(history), to: __MODULE__.Hardcoded, as: :new
 
   @spec next!(prng :: t()) :: {non_neg_integer(), t()}
   def next!(%__MODULE__.Random{} = prng), do: __MODULE__.Random.next!(prng)
   def next!(%__MODULE__.Hardcoded{} = prng), do: __MODULE__.Hardcoded.next!(prng)
 
-  @spec get_history(prng :: t()) :: history()
+  @spec get_history(prng :: t()) :: Decorum.History.t()
   def get_history(%__MODULE__.Random{} = prng), do: __MODULE__.Random.get_history(prng)
   def get_history(%__MODULE__.Hardcoded{} = prng), do: __MODULE__.Hardcoded.get_history(prng)
 end

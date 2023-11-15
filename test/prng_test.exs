@@ -20,18 +20,6 @@ defmodule PRNGTest do
     assert value1 != value2
   end
 
-  # test "random PRNG with the same seed generates the same value" do
-  #   seed = ExUnit.configuration()[:seed]
-
-  #   prng = PRNG.random(seed)
-  #   {value1, _} = PRNG.next!(prng)
-
-  #   prng = PRNG.random(seed)
-  #   {value2, _} = PRNG.next!(prng)
-
-  #   assert value1 == value2
-  # end
-
   test "hardcoded PRNG replays the given history" do
     history = Enum.to_list(100..150)
 

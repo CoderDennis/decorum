@@ -74,6 +74,8 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 I don’t love the name PRNG.
 Maybe flatten the structure while keeping `random/0` and `hardcoded/1` constructor functions.
 
+- [ ] Add `property` and `check all` macros. Others?
+
 - [ ] Run the shrinking challenges (https://github.com/jlink/shrinking-challenge)
 
 ### How do we make generators composible? What happens when a property uses more than one generator?
@@ -103,15 +105,15 @@ Iterate through those histories until:
 
 How does it find possible smaller histories? By using some set of strategies or passes?
 
-When it finds a valid smaller history, then starts over with that one?
+When it finds a valid smaller history, then starts over with that one.
 
 Individually shrink integers. Try zero, divide by 2, subtract 1, and removing from history. Do we need to keep track of values we’ve used? Might be important to avoid retrying zero a bunch of times.
 
-Do we shrink the first value and then shrink the rest of the history?
+Do we shrink the first value and then shrink the rest of the history? That doesn't really work. Some shrinking needs to operate on later values only.
 
 Only feed used history into next round of shrinking? Discard unused values at the end of history.
 
-Storing larger integers might make shrinking less efficient because it takes longer to reach low values. 
+Storing larger integers might make shrinking less efficient because it takes longer to reach low values.
 
 ### Is there a better syntax for defining property tests in Elixir?
 
@@ -134,3 +136,20 @@ Just use `check_all` directly without the macros. Add macros later.
 How important is it for `Decorum.uniform_integer/1` to produce uniformly random values?
 I tried the code from https://rosettacode.org/wiki/Verify_distribution_uniformity/Chi-squared_test and its `chi2IsUniform/2` function returned false for all the examples I ran.
 The `chi2Probability/2` results were around `1.69e-13` when they were expected to be greater than `0.05`.
+
+```
+  # non-stream version of shrinking a single integer
+  def shrink_int(i) do
+    shrink_int(i - 1, MapSet.new([0])) |> Enum.reverse()
+  end
+
+  defp shrink_int(i, seen) when i < 0, do: seen
+
+  defp shrink_int(i, seen) do
+    if MapSet.member?(seen, i) do
+      seen
+    else
+      shrink_int(div(i, 2), seen |> MapSet.put(i) |> MapSet.put(i - 1))
+    end
+  end
+```

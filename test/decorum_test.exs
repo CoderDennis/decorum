@@ -58,5 +58,15 @@ defmodule DecorumTest do
                      |> Decorum.check_all(fn x -> assert x < 321 end)
                    end
     end
+
+    test "a list of integers shrinks to [1,0] when asserting that the list is sorted" do
+      assert_raise ExUnit.AssertionError,
+                   ~r/left:  [1,0]/,
+                   fn ->
+                     Decorum.uniform_integer(50_000)
+                     |> Decorum.list_of()
+                     |> Decorum.check_all(fn lst -> assert lst == Enum.sort(lst) end)
+                   end
+    end
   end
 end

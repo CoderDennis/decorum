@@ -4,6 +4,7 @@ defmodule Decorum do
   """
 
   alias Decorum.PRNG
+  alias Decorum.History
 
   @type generator_fun(a) :: (PRNG.t() -> {a, PRNG.t()})
 
@@ -55,6 +56,9 @@ defmodule Decorum do
           try do
             shrink(PRNG.get_history(prng), generator, test_fn)
           rescue
+            Decorum.PRNG.EmptyHistoryError ->
+              reraise exception, __STACKTRACE__
+
             shrunk_exception ->
               reraise shrunk_exception, __STACKTRACE__
           else
@@ -68,9 +72,11 @@ defmodule Decorum do
 
   defp shrink(history, generator, test_fn) do
     history
-    |> shrink()
+    # |> IO.inspect()
+    |> History.shrink()
     |> Enum.take(200)
     |> Enum.reduce_while(0, fn hist, _ ->
+      # hist |> IO.inspect()
       {value, _} = generator.(PRNG.hardcoded(hist))
 
       try do
@@ -78,11 +84,11 @@ defmodule Decorum do
         {:cont, :ok}
       rescue
         Decorum.PRNG.EmptyHistoryError ->
-          {:halt, :ok}
+          {:cont, :ok}
 
         exception ->
           try do
-            {:halt, shrink(hist, generator, test_fn)}
+            {:halt, shrink(hist, generator, test_fn)} # this isn't actually causing recursion?
           rescue
             shrunk_exception ->
               reraise shrunk_exception, __STACKTRACE__
@@ -91,16 +97,6 @@ defmodule Decorum do
           end
       end
     end)
-  end
-
-  defp shrink([]), do: []
-
-  defp shrink([0 | t]), do: shrink(t)
-
-  defp shrink([h | t] = _history) do
-    div_2 = div(h, 2)
-    sub_1 = h - 1
-    [[div_2 | t], [sub_1 | t] | shrink([div_2 | t])]
   end
 
   ## Generators
@@ -190,6 +186,28 @@ defmodule Decorum do
   end
 
   @doc """
+  Generates a list of values produced by the given generator
+
+  Use a biased coin flip to determine if another value should be gerenated or the list should be terminated
+  """
+  @spec list_of(t(a)) :: t([a]) when a: term()
+  def list_of(%Decorum{generator: generator}) do
+    new(fn prng ->
+      Stream.repeatedly(fn -> :ok end)
+      |> Enum.reduce_while({[], prng}, fn _, {list, prng} ->
+        {flip, prng} = PRNG.next!(prng)
+
+        if rem(flip, 10) > 0 do
+          {value, prng} = generator.(prng)
+          {:cont, {[value | list], prng}}
+        else
+          {:halt, {Enum.reverse(list), prng}}
+        end
+      end)
+    end)
+  end
+
+  @doc """
   Generates an integer between 0 and max.
 
   Currently only supports 32-bit values and is not truly uniform as the use of `rem`
@@ -201,6 +219,10 @@ defmodule Decorum do
       {value, prng} = PRNG.next!(prng)
       {rem(value, max + 1), prng}
     end)
+  end
+
+  def uniform_integer() do
+    uniform_integer(Integer.pow(2, 32) -1)
   end
 
   ## Helpers
