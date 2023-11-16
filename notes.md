@@ -73,8 +73,10 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [ ] Implement float generator by copying Elm/Hypothesis implementation. How does it optimize for shrinking? (I initially guessed that it simplified towards 1.0 instead of towards zero, but that wouldn’t produce simpler fractions.) See https://github.com/HypothesisWorks/hypothesis/blob/d55849df92d01a25364aa21a1adb310ee0a3a390/hypothesis-python/src/hypothesis/internal/conjecture/floats.py which was linked to from https://github.com/elm-explorations/test/blob/master/src/Fuzz/Float.elm
 
-
 - [x] Run the test body N times looking for initial failures. N is how many items we take from the generator. N should be configurable, but start with 100.
+
+- [ ] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values.
+It's essentially the same as `Enum.zip/1` but for Decorum generators.
 
 - [ ] Add configuration option for how many times to run the test body.
 
@@ -88,7 +90,10 @@ Maybe flatten the structure while keeping `random/0` and `hardcoded/1` construct
 
 ### How do we make generators composible? What happens when a property uses more than one generator?
 
-Users should be able to create new generators based on the library generators. This may become clear while implementing the list generator.
+Users should be able to create new generators based on the library generators.
+
+Using functions such as `map/2` and `and_then/2` new generators can be easily based on existing generators.
+`map/2` is for a simple function over generated values while `and_then/2` is for running a generated based on a generated value.
 
 ### How long of lists should the list generator produce?
 **StreamData gives lists up to generation size.**
