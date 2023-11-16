@@ -47,7 +47,7 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [x] Hanlde getting to the end of prng history. Change `next/1` to `next!/1` and raise EmptyHistoryError.
 
-- [ ] When validating a shrunken history need to distinguish between running out of numbers and no longer failing the test. Should be easy to write a test for this. What is the process of rerunning the test and trying further shrinking? It actually seems similar to genetic algorithms. For a given test, this shouldn’t need to be parallelized.
+- [x] When validating a shrunken history need to distinguish between running out of numbers and no longer failing the test. 
 
 - [x] Remove `prng` parameter from `check_all` because we need a new one for each test run. Or make it optional.
 
@@ -59,7 +59,13 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [x] Add `list_of` with shrinking on a list of integers. Use "list is sorted" as the property which should shrink to `[1,0]`.
 
-- [ ] Change `History.shrink_length/1` to remove one item at a time and fix the resulting error.
+- [x] Change `History.shrink_length/1` to remove one item at a time and fix the resulting error and occasional timeout.
+
+- [x] Keep track of seen histories to avoid trying them again.
+
+- [ ] Change `History.shrink_length/1` to remove varying sized chunks.
+
+- [ ] Change `History.shrink_length/1` to remove segments from within the history instead of only at the beginning.
 
 - [ ] Add support for generating integers larger than the internal representation of the PRNG history which is currently a 32-bit integer. This requires consuming more than one value. The `next` funciton probably needs a byte_count parameter.
 
@@ -109,13 +115,18 @@ How does it find possible smaller histories? By using some set of strategies or 
 
 When it finds a valid smaller history, then starts over with that one.
 
-Individually shrink integers. Try zero, divide by 2, subtract 1, and removing from history. Do we need to keep track of values we’ve used? Might be important to avoid retrying zero a bunch of times.
+Individually shrink integers. Try zero, divide by 2, subtract 1, and removing from history.
+
+Keep track of histories that have been used/seen to avoid retrying them.
 
 Do we shrink the first value and then shrink the rest of the history? That doesn't really work. Some shrinking needs to operate on later values only.
 
 Only feed used history into next round of shrinking? Discard unused values at the end of history.
 
 Storing larger integers might make shrinking less efficient because it takes longer to reach low values.
+
+Is the process of rerunning the test and trying further shrinking similar to genetic algorithms?
+For a given test, this shouldn’t need to be parallelized.
 
 ### Is there a better syntax for defining property tests in Elixir?
 

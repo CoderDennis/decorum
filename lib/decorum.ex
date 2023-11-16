@@ -54,13 +54,8 @@ defmodule Decorum do
       rescue
         exception ->
           try do
-            shrink(PRNG.get_history(prng), generator, test_fn)
+            shrink(PRNG.get_history(prng), generator, test_fn, MapSet.new())
           rescue
-            Decorum.PRNG.EmptyHistoryError ->
-              # TODO: raise some other type of error if we ever get this error from the shrink function?
-              IO.puts("EmptyHistoryError in check_all should never happen")
-              reraise exception, __STACKTRACE__
-
             shrunk_exception ->
               reraise shrunk_exception, __STACKTRACE__
           else
@@ -70,36 +65,50 @@ defmodule Decorum do
     end)
   end
 
-  defp shrink([], _generator, _test_fn), do: :ok
+  defp shrink([], _generator, _test_fn, _seen), do: :ok
 
-  defp shrink(history, generator, test_fn) do
-    history
-    |> History.shrink()
-    |> Enum.take(200)
-    |> Enum.reduce_while(0, fn hist, _ ->
-      {value, _} = generator.(PRNG.hardcoded(hist))
+  defp shrink(history, generator, test_fn, seen) do
+    {seen, new_history, exception, stacktrace} =
+      history
+      |> History.shrink()
+      |> Enum.take(200)
+      |> Enum.reduce_while({seen, history, nil, nil}, fn hist, {seen, _, _, _} ->
+        if MapSet.member?(seen, hist) do
+          {:cont, {seen, history, nil, nil}}
+        else
+          seen = MapSet.put(seen, hist)
 
-      try do
-        test_fn.(value)
-        {:cont, :ok}
-      rescue
-        Decorum.PRNG.EmptyHistoryError ->
-          {:cont, :ok}
-
-        exception ->
           try do
-            {:halt, shrink(hist, generator, test_fn)}
+            {value, _} = generator.(PRNG.hardcoded(hist))
+            test_fn.(value)
+            {:cont, {seen, hist, nil, nil}}
           rescue
             Decorum.PRNG.EmptyHistoryError ->
-              {:cont, :ok}
+              {:cont, {seen, history, nil, nil}}
 
-            shrunk_exception ->
-              reraise shrunk_exception, __STACKTRACE__
+            exception ->
+              {:halt, {seen, hist, exception, __STACKTRACE__}}
+          end
+        end
+      end)
+
+    if new_history != history do
+      try do
+        shrink(new_history, generator, test_fn, seen)
+      rescue
+        shrunk_exception ->
+          reraise shrunk_exception, __STACKTRACE__
+      else
+        _ ->
+          if exception != nil do
+            reraise exception, stacktrace
           else
-            _ -> reraise exception, __STACKTRACE__
+            :ok
           end
       end
-    end)
+    else
+      :ok
+    end
   end
 
   ## Generators

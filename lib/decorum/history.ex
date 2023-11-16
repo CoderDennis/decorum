@@ -21,10 +21,12 @@ defmodule Decorum.History do
     )
   end
 
-  # Removes 2 items at a time. Should be expanded to remove varying sized chunks.
+  # Removes 1 items at a time.
+  # Should be expanded to remove varying sized chunks.
+  # Also should remove segments from within the history instead of only at the beginning.
   defp shrink_length(history) do
     Stream.unfold(history, fn
-      [_h, _h2, h3 | t] -> {[h3 | t], [h3 | t]}
+      [_h, h2 | t] -> {[h2 | t], [h2 | t]}
       _ -> nil
     end)
   end
