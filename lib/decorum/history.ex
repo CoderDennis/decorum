@@ -1,10 +1,21 @@
 defmodule Decorum.History do
+  @moduledoc """
+  History is currently a list of non-negative integers.
+
+  It might make sense to expand it to a structure where groups of random bytes could be labeled.
+
+  The original Hypothesis implementation uses labels. The Elm test implementation does not.
+  """
+
   @type t :: list(non_neg_integer())
 
   @doc """
   Takes a PRNG history and shrinks it to smaller values.
 
   Smaller is defined as shorter or lower sort order.
+
+  All the results are guaranteed to be smaller than the input,
+  but there is no guarantee on the order of the results when compared to each other.
   """
   @spec shrink(t()) :: Enumerable.t(t())
   def shrink([]), do: []
@@ -21,7 +32,7 @@ defmodule Decorum.History do
     )
   end
 
-  # Removes 1 items at a time.
+  # Removes 1 item at a time.
   # Should be expanded to remove varying sized chunks.
   # Also should remove segments from within the history instead of only at the beginning.
   defp shrink_length(history) do
