@@ -2,22 +2,23 @@
 
 Property-based testing for Elixir with shrinking that just works.
 
-## Installation
+This is an implementation of internal shrinking, which was first invented for the [Hypothesis](https://github.com/HypothesisWorks/hypothesis) library in Python.
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `decorum` to your list of dependencies in `mix.exs`:
+Shrinking is the killer feature of property-based testing. It is the process of reducing a randomly generated failing test case into a small human-readable example. 
+Other approaches to shrinking require code to be explicitly written to shrink each specific type of generated data.
+The approach we are using is built on the concept that the series of random numbers that feeds the data generators can be simplified in a unified manner that will lead to simpler test cases for all data generators automatically.
 
-```elixir
-def deps do
-  [
-    {:decorum, "~> 0.1.0"}
-  ]
-end
-```
+There are specific implementations for some generators (such as `float`) that are fine tuned for this method of shrinking. 
+However, new generators built by composing the generators provided in this library should shrink well without additional thought or effort.
+If you find an example of a generator and a test case that does not shrink well, please submit an issue so we can look into it.
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/decorum>.
+## Status
+
+I'm currently in pre-release, proof-of-concept mode. I've borowed some concepts from [StreamData](https://github.com/whatyouhide/stream_data) which is the de facto standard Elixir library for property-based testing. I've also leaned heavily on the [Elm test](https://github.com/elm-explorations/test) implementation.
+
+There are no macros yet, so property tests are just regular ExUnit tests with names starting with "property" by convention. 
+
+See [NOTES.md](NOTES.md) for my ongoing thoughts, questions, and TODOs.
 
 ## Background
 

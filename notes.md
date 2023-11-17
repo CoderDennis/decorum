@@ -75,10 +75,15 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [x] Run the test body N times looking for initial failures. N is how many items we take from the generator. N should be configurable, but start with 100.
 
+- [ ] Implement other basic generators such as `atom`, `binary`, `string`, etc.
+
 - [ ] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values.
-It's essentially the same as `Enum.zip/1` but for Decorum generators.
+It's essentially the same as `Enum.zip/1` but for Decorum generators. 
+It looks like StreamData has a generator named `tuple` which does this with a tuple of generators as its input.
 
 - [ ] Add configuration option for how many times to run the test body.
+
+- [ ] Add the concept of generation size and re-sizing from StreamData?
 
 - [ ] Rename PRNG module to Random?
 I don’t love the name PRNG.
@@ -88,19 +93,25 @@ Maybe flatten the structure while keeping `random/0` and `hardcoded/1` construct
 
 - [ ] Run the shrinking challenges (https://github.com/jlink/shrinking-challenge)
 
-### How do we make generators composible? What happens when a property uses more than one generator?
+### How do we make generators composible? 
 
 Users should be able to create new generators based on the library generators.
 
-Using functions such as `map/2` and `and_then/2` new generators can be easily based on existing generators.
-`map/2` is for a simple function over generated values while `and_then/2` is for running a generated based on a generated value.
+Using functions such as `map/2` and `and_then/2`, new generators can be easily based on existing generators.
+`map/2` is for a simple function over generated values while `and_then/2` is for running a generator based on a generated value.
+
+### What happens when a property uses more than one generator?
+
+Use the `zip/1` function for properties that use more than one generator.
 
 ### How long of lists should the list generator produce?
+
 **StreamData gives lists up to generation size.**
 PropEr also uses an internal increasing size parameter. The sized function in PropCheck is used to get the current size parameter. In StreamData sized is a macro and the scale function is used to add a multiple of the size.
 
 What about the biased coin flip for choosing another item? The Elm implementation uses it.
 I don’t understand how the shrinker would know that the pair goes together. How could this relate to using the size parameter for affecting the length of the generated lists?
+We could use size as a limit on the length, or we could change the weight of the coin flip as we get closer to size.
 
 ### What is a Generator?
 
