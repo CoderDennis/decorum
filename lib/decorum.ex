@@ -3,8 +3,8 @@ defmodule Decorum do
   Documentation for `Decorum`.
   """
 
-  alias Decorum.PRNG
   alias Decorum.History
+  alias Decorum.PRNG
 
   @type generator_fun(a) :: (PRNG.t() -> {a, PRNG.t()})
 
@@ -119,7 +119,7 @@ defmodule Decorum do
   Values will be 32-bit positive integers.
   """
   @spec prng_values() :: t(non_neg_integer)
-  def prng_values() do
+  def prng_values do
     new(fn prng -> PRNG.next!(prng) end)
   end
 
@@ -205,7 +205,7 @@ defmodule Decorum do
   @spec list_of(t(a)) :: t([a]) when a: term()
   def list_of(%Decorum{generator: generator}) do
     new(fn prng ->
-      Stream.repeatedly(fn -> :ok end)
+      Stream.cycle(1..1)
       |> Enum.reduce_while({[], prng}, fn _, {list, prng} ->
         {flip, prng} = PRNG.next!(prng)
 
@@ -233,7 +233,7 @@ defmodule Decorum do
     end)
   end
 
-  def uniform_integer() do
+  def uniform_integer do
     uniform_integer(Integer.pow(2, 32) - 1)
   end
 

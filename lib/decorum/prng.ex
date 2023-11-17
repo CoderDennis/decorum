@@ -29,7 +29,7 @@ defmodule Decorum.PRNG do
     @int32 Integer.pow(2, 32)
 
     @spec new() :: t
-    def new() do
+    def new do
       state = :rand.jump()
       %__MODULE__{state: state, history: []}
     end

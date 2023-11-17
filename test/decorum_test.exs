@@ -24,8 +24,8 @@ defmodule DecorumTest do
 
     test "property uniform_integer does not produce numbers greater than given max" do
       Decorum.check_all(Decorum.prng_values(), fn max ->
-        randomInt = Decorum.uniform_integer(max)
-        assert randomInt |> Enum.take(10) |> Enum.all?(fn x -> x <= max end)
+        random_int = Decorum.uniform_integer(max)
+        assert random_int |> Enum.take(10) |> Enum.all?(fn x -> x <= max end)
       end)
     end
 
