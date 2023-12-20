@@ -77,7 +77,7 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [ ] Implement other basic generators such as `atom`, `binary`, `string`, etc.
 
-- [ ] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values.
+- [x] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values.
 It's essentially the same as `Enum.zip/1` but for Decorum generators. 
 It looks like StreamData has a generator named `tuple` which does this with a tuple of generators as its input.
 
@@ -92,6 +92,8 @@ Maybe flatten the structure while keeping `random/0` and `hardcoded/1` construct
 - [ ] Add `property` and `check all` macros. Others?
 
 - [ ] Run the shrinking challenges (https://github.com/jlink/shrinking-challenge)
+
+- [ ] Publish to Hex.pm
 
 ### How do we make generators composible? 
 

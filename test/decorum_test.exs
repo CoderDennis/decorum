@@ -22,6 +22,27 @@ defmodule DecorumTest do
       assert values == [2, 4, 6]
     end
 
+    test "zip with two constant generators produces a tuple of values" do
+      values =
+        Decorum.zip(Decorum.constant(:a), Decorum.constant(:b))
+        |> Decorum.stream(PRNG.random())
+        |> Enum.take(2)
+
+      assert values == [{:a, :b}, {:a, :b}]
+    end
+
+    test "zip with a list of constant generators produces a tuple of values in order" do
+      values =
+        [:a, :b, :c]
+        |> Enum.map(fn v -> Decorum.constant(v) end)
+        |> Decorum.zip()
+        |> Decorum.stream(PRNG.random())
+        |> Enum.take(1)
+        |> List.first()
+
+      assert values == {:a, :b, :c}
+    end
+
     test "property uniform_integer does not produce numbers greater than given max" do
       Decorum.check_all(Decorum.prng_values(), fn max ->
         random_int = Decorum.uniform_integer(max)

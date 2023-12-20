@@ -260,6 +260,34 @@ defmodule Decorum do
     end)
   end
 
+  @spec zip(t(a), t(b)) :: t({a, b}) when a: term(), b: term()
+  def zip(%Decorum{generator: generator_a}, %Decorum{generator: generator_b}) do
+    new(fn prng ->
+      {value_a, prng} = generator_a.(prng)
+      {value_b, prng} = generator_b.(prng)
+      {{value_a, value_b}, prng}
+    end)
+  end
+
+  @spec zip([t(any())]) :: t(tuple())
+  def zip(generators) do
+    new(fn prng ->
+      {value_list, prng} =
+        generators
+        |> Enum.reduce({[], prng}, fn %Decorum{generator: generator}, {values, prng} ->
+          {value, prng} = generator.(prng)
+          {[value | values], prng}
+        end)
+
+      {
+        value_list
+        |> Enum.reverse()
+        |> List.to_tuple(),
+        prng
+      }
+    end)
+  end
+
   ## Enumerable
 
   defimpl Enumerable do
