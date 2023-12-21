@@ -85,8 +85,8 @@ It looks like StreamData has a generator named `tuple` which does this with a tu
 
 - [ ] Add the concept of generation size and re-sizing from StreamData?
 
-- [ ] Rename PRNG module to Random?
-I don’t love the name PRNG.
+- [ ] Rename Prng module to Random?
+I don’t love the name Prng.
 Maybe flatten the structure while keeping `random/0` and `hardcoded/1` constructor functions.
 
 - [ ] Add `property` and `check all` macros. Others?
@@ -117,7 +117,7 @@ We could use size as a limit on the length, or we could change the weight of the
 
 ### What is a Generator?
 
-A function that takes in a PRNG struct (and a size?) and returns the next value and an updated PRNG struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that. 
+A function that takes in a Prng struct (and a size?) and returns the next value and an updated Prng struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that. 
 It could behave like a Stream by default and internally to `check_all` the state could be tracked. The generator function is essentially the same as `next_fun` used by `Stream.unfold`.
 
 ### What is a Shrinker?
@@ -168,7 +168,7 @@ How important is it for `Decorum.uniform_integer/1` to produce uniformly random 
 I tried the code from https://rosettacode.org/wiki/Verify_distribution_uniformity/Chi-squared_test and its `chi2IsUniform/2` function returned false for all the examples I ran.
 The `chi2Probability/2` results were around `1.69e-13` when they were expected to be greater than `0.05`.
 
-```
+```elixir
   # non-stream version of shrinking a single integer
   def shrink_int(i) do
     shrink_int(i - 1, MapSet.new([0])) |> Enum.reverse()

@@ -1,6 +1,6 @@
-defmodule Decorum.PRNG do
+defmodule Decorum.Prng do
   @moduledoc """
-  `PRNG` (pseudo random number generator) is a wrapper around the `:rand` module.
+  `Prng` (pseudo random number generator) is a wrapper around the `:rand` module.
 
   It has 2 states:
   1. Random

@@ -4,9 +4,9 @@ defmodule Decorum do
   """
 
   alias Decorum.History
-  alias Decorum.PRNG
+  alias Decorum.Prng
 
-  @type generator_fun(a) :: (PRNG.t() -> {a, PRNG.t()})
+  @type generator_fun(a) :: (Prng.t() -> {a, Prng.t()})
 
   @type t(a) :: %__MODULE__{generator: generator_fun(a)}
 
@@ -21,12 +21,12 @@ defmodule Decorum do
   end
 
   @doc """
-  Used to run a Decorum generator with a specific PRNG struct.
+  Used to run a Decorum generator with a specific Prng struct.
 
-  Takes a Decorum struct and a PRNG struct and returns a lazy Enumerable
+  Takes a Decorum struct and a Prng struct and returns a lazy Enumerable
   of generated values.
   """
-  @spec stream(t(a), PRNG.t()) :: Enumerable.t(a) when a: term()
+  @spec stream(t(a), Prng.t()) :: Enumerable.t(a) when a: term()
   def stream(%__MODULE__{generator: generator}, prng) do
     Stream.unfold(prng, generator)
   end
@@ -47,14 +47,14 @@ defmodule Decorum do
   def check_all(%__MODULE__{generator: generator}, test_fn) do
     1..100
     |> Enum.each(fn _ ->
-      {value, prng} = generator.(PRNG.random())
+      {value, prng} = generator.(Prng.random())
 
       try do
         test_fn.(value)
       rescue
         exception ->
           try do
-            shrink(PRNG.get_history(prng), generator, test_fn, MapSet.new())
+            shrink(Prng.get_history(prng), generator, test_fn, MapSet.new())
           rescue
             shrunk_exception ->
               reraise shrunk_exception, __STACKTRACE__
@@ -79,11 +79,11 @@ defmodule Decorum do
           seen = MapSet.put(seen, hist)
 
           try do
-            {value, _} = generator.(PRNG.hardcoded(hist))
+            {value, _} = generator.(Prng.hardcoded(hist))
             test_fn.(value)
             {:cont, {seen, hist, nil, nil}}
           rescue
-            Decorum.PRNG.EmptyHistoryError ->
+            Decorum.Prng.EmptyHistoryError ->
               {:cont, {seen, history, nil, nil}}
 
             exception ->
@@ -120,7 +120,7 @@ defmodule Decorum do
   """
   @spec prng_values() :: t(non_neg_integer)
   def prng_values do
-    new(fn prng -> PRNG.next!(prng) end)
+    new(fn prng -> Prng.next!(prng) end)
   end
 
   @doc """
@@ -207,7 +207,7 @@ defmodule Decorum do
     new(fn prng ->
       Stream.cycle(1..1)
       |> Enum.reduce_while({[], prng}, fn _, {list, prng} ->
-        {flip, prng} = PRNG.next!(prng)
+        {flip, prng} = Prng.next!(prng)
 
         if rem(flip, 10) > 0 do
           {value, prng} = generator.(prng)
@@ -228,7 +228,7 @@ defmodule Decorum do
   @spec uniform_integer(non_neg_integer()) :: t(non_neg_integer())
   def uniform_integer(max) do
     new(fn prng ->
-      {value, prng} = PRNG.next!(prng)
+      {value, prng} = Prng.next!(prng)
       {rem(value, max + 1), prng}
     end)
   end
@@ -292,7 +292,7 @@ defmodule Decorum do
 
   defimpl Enumerable do
     def reduce(decorum, acc, fun) do
-      reduce(decorum, acc, fun, PRNG.random())
+      reduce(decorum, acc, fun, Prng.random())
     end
 
     defp reduce(_decorum, {:halt, acc}, _fun, _prng) do

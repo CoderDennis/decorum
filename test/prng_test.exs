@@ -1,46 +1,46 @@
-defmodule PRNGTest do
+defmodule PrngTest do
   use ExUnit.Case, async: true
 
-  alias Decorum.PRNG
+  alias Decorum.Prng
 
-  test "random PRNG preserves history" do
-    {values, prng} = get_values(PRNG.random(), 10)
+  test "random Prng preserves history" do
+    {values, prng} = get_values(Prng.random(), 10)
 
-    history = PRNG.get_history(prng)
+    history = Prng.get_history(prng)
 
     assert values == history
   end
 
-  test "random PRNG generates different values" do
-    prng = PRNG.random()
+  test "random Prng generates different values" do
+    prng = Prng.random()
 
-    {value1, prng} = PRNG.next!(prng)
-    {value2, _prng} = PRNG.next!(prng)
+    {value1, prng} = Prng.next!(prng)
+    {value2, _prng} = Prng.next!(prng)
 
     assert value1 != value2
   end
 
-  test "hardcoded PRNG replays the given history" do
+  test "hardcoded Prng replays the given history" do
     history = Enum.to_list(100..150)
 
-    {values, _prng} = get_values(PRNG.hardcoded(history), 50)
+    {values, _prng} = get_values(Prng.hardcoded(history), 50)
 
     assert history == values
   end
 
-  test "hardcoded PRNG raises EmptyHistoryError when empty" do
+  test "hardcoded Prng raises EmptyHistoryError when empty" do
     history = [1]
 
-    prng = PRNG.hardcoded(history)
-    {1, prng} = PRNG.next!(prng)
-    assert_raise Decorum.PRNG.EmptyHistoryError, fn -> PRNG.next!(prng) end
+    prng = Prng.hardcoded(history)
+    {1, prng} = Prng.next!(prng)
+    assert_raise Decorum.Prng.EmptyHistoryError, fn -> Prng.next!(prng) end
   end
 
-  @spec get_values(prng :: PRNG.t(), count :: non_neg_integer()) :: {non_neg_integer(), PRNG.t()}
+  @spec get_values(prng :: Prng.t(), count :: non_neg_integer()) :: {non_neg_integer(), Prng.t()}
   def get_values(prng, count) do
     0..count
     |> Enum.reduce({[], prng}, fn _, {list, prng} ->
-      {value, new_prng} = PRNG.next!(prng)
+      {value, new_prng} = Prng.next!(prng)
       {list ++ [value], new_prng}
     end)
   end

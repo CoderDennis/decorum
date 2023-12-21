@@ -2,7 +2,7 @@ defmodule DecorumTest do
   use ExUnit.Case, async: true
   doctest Decorum
 
-  alias Decorum.PRNG
+  alias Decorum.Prng
 
   describe "Enumerable" do
     test "a Decorum struct works with the Enum module" do
@@ -12,7 +12,7 @@ defmodule DecorumTest do
 
   describe "Generators" do
     test "map" do
-      prng = PRNG.hardcoded(Enum.to_list(1..3))
+      prng = Prng.hardcoded(Enum.to_list(1..3))
 
       values =
         Decorum.map(Decorum.prng_values(), fn x -> x * 2 end)
@@ -25,7 +25,6 @@ defmodule DecorumTest do
     test "zip with two constant generators produces a tuple of values" do
       values =
         Decorum.zip(Decorum.constant(:a), Decorum.constant(:b))
-        |> Decorum.stream(PRNG.random())
         |> Enum.take(2)
 
       assert values == [{:a, :b}, {:a, :b}]
@@ -36,7 +35,6 @@ defmodule DecorumTest do
         [:a, :b, :c]
         |> Enum.map(fn v -> Decorum.constant(v) end)
         |> Decorum.zip()
-        |> Decorum.stream(PRNG.random())
         |> Enum.take(1)
         |> List.first()
 
