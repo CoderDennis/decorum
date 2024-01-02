@@ -47,16 +47,16 @@ defmodule Decorum.Prng do
   defmodule Hardcoded do
     @moduledoc false
     @type t :: %__MODULE__{
-            wholeHistory: Decorum.History.t(),
+            history: Decorum.History.t(),
             unusedHistory: Decorum.History.t()
           }
 
-    @enforce_keys [:wholeHistory, :unusedHistory]
-    defstruct [:wholeHistory, :unusedHistory]
+    @enforce_keys [:history, :unusedHistory]
+    defstruct [:history, :unusedHistory]
 
     @spec new(history :: Decorum.History.t()) :: t
     def new(history) when is_list(history) do
-      %__MODULE__{wholeHistory: history, unusedHistory: history}
+      %__MODULE__{history: [], unusedHistory: history}
     end
 
     @spec next!(prng :: t()) :: {non_neg_integer(), t()}
@@ -64,12 +64,12 @@ defmodule Decorum.Prng do
       raise EmptyHistoryError, "PRNG history is empty"
     end
 
-    def next!(%__MODULE__{unusedHistory: [value | rest]} = prng) do
-      {value, %__MODULE__{prng | unusedHistory: rest}}
+    def next!(%__MODULE__{history: history, unusedHistory: [value | rest]} = prng) do
+      {value, %__MODULE__{prng | history: [value | history], unusedHistory: rest}}
     end
 
     @spec get_history(prng :: t()) :: Decorum.History.t()
-    def get_history(%__MODULE__{wholeHistory: history}), do: history
+    def get_history(%__MODULE__{history: history}), do: Enum.reverse(history)
   end
 
   @spec random() :: t()
