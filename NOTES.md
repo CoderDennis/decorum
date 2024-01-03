@@ -75,19 +75,21 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [x] Run the test body N times looking for initial failures. N is how many items we take from the generator. N should be configurable, but start with 100.
 
+- [ ] Add configuration option for how many times to run the test body.
+
 - [ ] Implement other basic generators such as `atom`, `binary`, `string`, etc.
 
 - [x] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values.
 It's essentially the same as `Enum.zip/1` but for Decorum generators. 
 It looks like StreamData has a generator named `tuple` which does this with a tuple of generators as its input.
 
-- [ ] Add configuration option for how many times to run the test body.
-
 - [ ] Add the concept of generation size and re-sizing from StreamData?
 
 - [ ] Rename Prng module to Random?
 I don’t love the name Prng.
 Maybe flatten the structure while keeping `random/0` and `hardcoded/1` constructor functions.
+
+- [x] Add `filter/2` function that takes a generator and a predicate and filters out values that don't match the predicate.
 
 - [ ] Add `property` and `check all` macros. Others?
 

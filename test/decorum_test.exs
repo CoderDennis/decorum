@@ -4,6 +4,8 @@ defmodule DecorumTest do
 
   alias Decorum.Prng
 
+  require Integer
+
   describe "Enumerable" do
     test "a Decorum struct works with the Enum module" do
       Enum.take(Decorum.prng_values(), 10)
@@ -65,6 +67,19 @@ defmodule DecorumTest do
       assert range |> Enum.any?(fn x -> x > 0 end)
       assert range |> Enum.any?(fn x -> x < 0 end)
     end
+
+    test "filter is_even with hardcoded values 1 to 5 returns 2 and 4" do
+      prng = Prng.hardcoded(Enum.to_list(1..5))
+
+      values =
+        Decorum.prng_values()
+        |> Decorum.filter(&Integer.is_even/1)
+        |> Decorum.stream(prng)
+        |> Stream.take(2)
+        |> Enum.to_list()
+
+      assert values == [2, 4]
+    end
   end
 
   describe "Shrinking" do
@@ -86,6 +101,11 @@ defmodule DecorumTest do
                      |> Decorum.list_of()
                      |> Decorum.check_all(fn lst -> assert lst == Enum.sort(lst) end)
                    end
+    end
+  end
+
+  describe "Shrinking Challenges" do
+    test "bound5" do
     end
   end
 end

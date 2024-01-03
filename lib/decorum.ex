@@ -240,8 +240,13 @@ defmodule Decorum do
   ## Helpers
 
   @doc """
+  Use this function to chain generators together when a generator is based on the
+  value emitted by another generator.
 
   In StreamData this funciton is called `bind`.
+
+  `fun` is a function that takes a value from the given generator and
+  returns a generator.
   """
   @spec and_then(t(a), (a -> t(b))) :: t(b) when a: term(), b: term()
   def and_then(%Decorum{generator: generator}, fun) when is_function(fun, 1) do
@@ -252,6 +257,12 @@ defmodule Decorum do
     end)
   end
 
+  @doc """
+  Similar to Enum.map/2
+
+  Returns a generator where each element is the result of invoking fun
+  on each corresponding element of the given generator.
+  """
   @spec map(t(a), (a -> b)) :: t(b) when a: term(), b: term()
   def map(%Decorum{generator: generator}, fun) when is_function(fun, 1) do
     new(fn prng ->
@@ -260,6 +271,11 @@ defmodule Decorum do
     end)
   end
 
+  @doc """
+  Similar to Enum.zip/2
+
+  Zips corresponding elements from two generators into a generator of tuples.
+  """
   @spec zip(t(a), t(b)) :: t({a, b}) when a: term(), b: term()
   def zip(%Decorum{generator: generator_a}, %Decorum{generator: generator_b}) do
     new(fn prng ->
@@ -269,6 +285,13 @@ defmodule Decorum do
     end)
   end
 
+  @doc """
+  Similar to Enum.zip/1
+
+  Zips corresponding elements from a finite collection of generators into a
+  generator of tuples.
+
+  """
   @spec zip([t(any())]) :: t(tuple())
   def zip(generators) do
     new(fn prng ->
@@ -285,6 +308,29 @@ defmodule Decorum do
         |> List.to_tuple(),
         prng
       }
+    end)
+  end
+
+  defp loop_until(prng, generator, fun) do
+    {value, prng} = generator.(prng)
+
+    if fun.(value) do
+      {value, prng}
+    else
+      loop_until(prng, generator, fun)
+    end
+  end
+
+  @doc """
+  Similar to Enum.filter/2
+
+  Filters the generator. Returns only values for which fun returns a truthy value.
+
+  """
+  @spec filter(t(a), (a -> boolean)) :: t(a) when a: term()
+  def filter(%Decorum{generator: generator}, fun) do
+    new(fn prng ->
+      loop_until(prng, generator, fun)
     end)
   end
 
