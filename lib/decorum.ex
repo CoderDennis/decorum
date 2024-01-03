@@ -198,9 +198,10 @@ defmodule Decorum do
   end
 
   @doc """
-  Generates a list of values produced by the given generator
+  Generates a list of values produced by the given generator.
 
-  Use a biased coin flip to determine if another value should be gerenated or the list should be terminated
+  Use a biased coin flip to determine if another value should be gerenated
+  or the list should be terminated.
   """
   @spec list_of(t(a)) :: t([a]) when a: term()
   def list_of(%Decorum{generator: generator}) do
@@ -290,7 +291,6 @@ defmodule Decorum do
 
   Zips corresponding elements from a finite collection of generators into a
   generator of tuples.
-
   """
   @spec zip([t(any())]) :: t(tuple())
   def zip(generators) do
