@@ -220,6 +220,14 @@ defmodule Decorum do
     end)
   end
 
+  @spec list_of_length(t(a), non_neg_integer()) :: [t(a)] when a: term()
+  def list_of_length(decorum, length) do
+    Stream.repeatedly(fn -> decorum end)
+    |> Enum.take(length)
+    |> Decorum.zip()
+    |> Decorum.map(&Tuple.to_list/1)
+  end
+
   @doc """
   Generates an integer between 0 and max.
 
@@ -311,13 +319,22 @@ defmodule Decorum do
     end)
   end
 
-  defp loop_until(prng, generator, fun) do
+  defmodule FilterTooNarrowError do
+    @moduledoc false
+    defexception [:message]
+  end
+
+  defp loop_until(_prng, _generator, _fun, 0) do
+    raise FilterTooNarrowError, "Decorum.filter did not find a matching value. Try widening the filter."
+  end
+
+  defp loop_until(prng, generator, fun, limit) do
     {value, prng} = generator.(prng)
 
     if fun.(value) do
       {value, prng}
     else
-      loop_until(prng, generator, fun)
+      loop_until(prng, generator, fun, limit - 1)
     end
   end
 
@@ -326,11 +343,13 @@ defmodule Decorum do
 
   Filters the generator. Returns only values for which fun returns a truthy value.
 
+  Use `limit` to specify how many times the generator should be called before raising an error.
+
   """
   @spec filter(t(a), (a -> boolean)) :: t(a) when a: term()
-  def filter(%Decorum{generator: generator}, fun) do
+  def filter(%Decorum{generator: generator}, fun, limit \\ 25) do
     new(fn prng ->
-      loop_until(prng, generator, fun)
+      loop_until(prng, generator, fun, limit)
     end)
   end
 

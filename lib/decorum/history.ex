@@ -10,6 +10,18 @@ defmodule Decorum.History do
   @type t :: list(non_neg_integer())
 
   @doc """
+  Shrinks an integer into smaller values: zero, n divided by 2, and n minus 1.
+  """
+  @spec shrink_int(non_neg_integer()) :: Enumerable.t(non_neg_integer())
+  def shrink_int(0), do: []
+  def shrink_int(1), do: [0]
+  def shrink_int(2), do: [0, 1]
+
+  def shrink_int(n) do
+    [0, div(n, 2), n - 1]
+  end
+
+  @doc """
   Takes a PRNG history and shrinks it to smaller values.
 
   Smaller is defined as shorter or lower sort order.
@@ -68,27 +80,4 @@ defmodule Decorum.History do
     |> Stream.uniq()
   end
 
-  @doc """
-  Shrinks a single integer into smaller possible values.
-
-  Order of values is not guaranteed, but 0 is the first result.
-  """
-  @spec shrink_int(non_neg_integer()) :: Enumerable.t(non_neg_integer())
-  def shrink_int(0), do: []
-
-  def shrink_int(i) do
-    Stream.resource(
-      fn -> {i - 1, MapSet.new()} end,
-      fn
-        {n, _seen} when n < 1 ->
-          {:halt, :ok}
-
-        {n, seen} ->
-          div_2 = div(n, 2)
-          new_values = MapSet.new([0, n, div_2, n - 1])
-          {MapSet.difference(new_values, seen), {div_2, MapSet.union(new_values, seen)}}
-      end,
-      fn _ -> :ok end
-    )
-  end
 end

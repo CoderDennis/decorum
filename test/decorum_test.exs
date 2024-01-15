@@ -103,9 +103,4 @@ defmodule DecorumTest do
                    end
     end
   end
-
-  describe "Shrinking Challenges" do
-    test "bound5" do
-    end
-  end
 end

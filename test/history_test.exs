@@ -3,16 +3,6 @@ defmodule HistoryTest do
 
   alias Decorum.History
 
-  test "shrink_int with the value 10 gives possible values [0, 1, 2, 3, 4, 8, 9]" do
-    possible_values = History.shrink_int(10) |> Enum.sort()
-    assert possible_values == [0, 1, 2, 3, 4, 8, 9]
-  end
-
-  test "shrink_int with max 32-bit value has 64 possible values" do
-    count = History.shrink_int(Integer.pow(2, 32)) |> Enum.count()
-    assert count == 64
-  end
-
   test "property shrink_int produces 0 as the first value" do
     Decorum.check_all(Decorum.integer(1..Integer.pow(2, 32)), fn x ->
       first_value = History.shrink_int(x) |> Enum.at(0)

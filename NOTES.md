@@ -53,7 +53,7 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [x] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle.
 
-- [ ] Raise our own exception type that has good debug output.
+- [ ] Format raised error message to include generated values and shrinking statistics.
 
 - [x] Get end to end with shrinking working with single integer generator.
 
@@ -66,6 +66,12 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 - [ ] Change `History.shrink_length/1` to remove varying sized chunks.
 
 - [ ] Change `History.shrink_length/1` to remove segments from within the history instead of only at the beginning.
+
+- [ ] Try a new implementation of shrinking. Create multiple histories from a given history. Test all of them against test_fn. 
+Keep best (shortlex smallest) that still fails the test and re-start the shrinking process with that one as the input.
+Maybe copy more of the elm-test implementation. Create a `Simplify` module or keep shrinking in the `History` module? 
+
+- [ ] Put raw chunk manipulation functions in `History` and test those first.
 
 - [ ] Add support for generating integers larger than the internal representation of the PRNG history which is currently a 32-bit integer. This requires consuming more than one value. The `next` funciton probably needs a byte_count parameter.
 
@@ -147,6 +153,10 @@ Storing larger integers might make shrinking less efficient because it takes lon
 
 Is the process of rerunning the test and trying further shrinking similar to genetic algorithms?
 For a given test, this shouldn’t need to be parallelized.
+
+Test functions passed to `StreamData.check_all` do not raise exceptions. They return `{:ok, map()}` or `{:error, map()}`.
+In the error tuple, the map contains details about original and shrunk failures.
+Also, the private `check_all` function is recursive when the test function passes.
 
 ### Is there a better syntax for defining property tests in Elixir?
 
