@@ -84,8 +84,8 @@ defmodule DecorumTest do
 
   describe "Shrinking" do
     test "an integer that is a multiple of 100 shrinks to 400 when asserting that it is less than 321" do
-      assert_raise ExUnit.AssertionError,
-                   ~r/left:  400/,
+      assert_raise Decorum.PropertyError,
+                   ~r/^400/,
                    fn ->
                      0..9000//100
                      |> Decorum.integer()
@@ -94,8 +94,8 @@ defmodule DecorumTest do
     end
 
     test "a list of integers shrinks to [1,0] when asserting that the list is sorted" do
-      assert_raise ExUnit.AssertionError,
-                   ~r/left:  \[1, 0\]/,
+      assert_raise Decorum.PropertyError,
+                   ~r/^\[1, 0\]/,
                    fn ->
                      Decorum.uniform_integer(50_000)
                      |> Decorum.list_of()

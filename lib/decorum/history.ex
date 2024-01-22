@@ -7,77 +7,76 @@ defmodule Decorum.History do
   The original Hypothesis implementation uses labels. The Elm test implementation does not.
   """
 
+  alias Decorum.History.Chunk
+
   @type t :: list(non_neg_integer())
 
   @doc """
-  Shrinks an integer into smaller values: zero, n divided by 2, and n minus 1.
-  """
-  @spec shrink_int(non_neg_integer()) :: Enumerable.t(non_neg_integer())
-  def shrink_int(0), do: []
-  def shrink_int(1), do: [0]
-  def shrink_int(2), do: [0, 1]
+  Compare two histories acording to shortlex order.
 
-  def shrink_int(n) do
-    [0, div(n, 2), n - 1]
+  Shorter histories are always considered smaller.
+
+  Equal length histories are compared using normal Erlang ordering.
+  """
+  @spec compare(t(), t()) :: :lt | :eq | :gt
+  def compare(history1, history2) do
+    case {{Enum.count(history1), history1}, {Enum.count(history2), history2}} do
+      {{length1, _}, {length2, _}} when length1 > length2 -> :gt
+      {{length1, _}, {length2, _}} when length1 < length2 -> :lt
+      {{_, history1}, {_, history2}} when history1 > history2 -> :gt
+      {{_, history1}, {_, history2}} when history1 < history2 -> :lt
+      _ -> :eq
+    end
   end
 
-  @doc """
-  Takes a PRNG history and shrinks it to smaller values.
+  @spec delete_chunk(t(), Chunk.t()) :: t()
+  def delete_chunk(history, chunk) do
+    {pre, _, post} = get_chunked_parts(history, chunk)
 
-  Smaller is defined as shorter or lower sort order.
-
-  All the results are guaranteed to be smaller than the input,
-  but there is no guarantee on the order of the results when compared to each other.
-  """
-  @spec shrink(t()) :: Enumerable.t(t())
-  def shrink([]), do: []
-
-  def shrink([i]) do
-    shrink_int(i)
-    |> Enum.map(fn s -> [s] end)
-  end
-
-  def shrink(history) do
-    Stream.concat(
-      shrink_length(history),
-      shrink_values(history)
+    Enum.concat(
+      pre,
+      post
     )
   end
 
-  # Removes 1 item at a time.
-  # Should be expanded to remove varying sized chunks.
-  # Also should remove segments from within the history instead of only at the beginning.
-  defp shrink_length(history) do
-    Stream.unfold(history, fn
-      [_h, h2 | t] -> {[h2 | t], [h2 | t]}
-      _ -> nil
-    end)
+  @spec replace_chunk(t(), Chunk.t(), t()) :: t()
+  def replace_chunk(history, chunk, new_chunk) do
+    {pre, _, post} = get_chunked_parts(history, chunk)
+
+    Enum.concat([
+      pre,
+      new_chunk,
+      post
+    ])
   end
 
-  defp shrink_values([h | t]) do
-    Stream.resource(
-      fn -> {[], h, t} end,
-      fn
-        :halt ->
-          {:halt, :ok}
-
-        {previous, current, []} ->
-          {
-            shrink_int(current)
-            |> Enum.map(fn c -> previous ++ [c] end),
-            :halt
-          }
-
-        {previous, current, [next | rest] = remaining} ->
-          {
-            shrink_int(current)
-            |> Enum.map(fn c -> previous ++ [c] ++ remaining end),
-            {previous ++ [current], next, rest}
-          }
-      end,
-      fn _ -> :ok end
-    )
-    |> Stream.uniq()
+  @spec replace_chunk_with_zero(t(), Chunk.t()) :: t()
+  def replace_chunk_with_zero(history, %Chunk{length: length} = chunk) do
+    replace_chunk(history, chunk, List.duplicate(0, length))
   end
 
+  @spec sort_chunk(t(), Chunk.t()) :: t()
+  def sort_chunk(history, %Chunk{length: 1}), do: history
+
+  def sort_chunk(history, chunk) do
+    {pre, chunk_elements, post} = get_chunked_parts(history, chunk)
+
+    Enum.concat([
+      pre,
+      Enum.sort(chunk_elements),
+      post
+    ])
+  end
+
+  @spec get_chunk_elements(t(), Chunk.t()) :: t()
+  def get_chunk_elements(history, chunk) do
+    {_, chunk_elements, _} = get_chunked_parts(history, chunk)
+    chunk_elements
+  end
+
+  defp get_chunked_parts(history, %Chunk{start: start, length: length}) do
+    {pre, rest} = Enum.split(history, start)
+    {chunk_elements, post} = Enum.split(rest, length)
+    {pre, chunk_elements, post}
+  end
 end

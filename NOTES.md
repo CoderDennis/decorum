@@ -55,6 +55,8 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [ ] Format raised error message to include generated values and shrinking statistics.
 
+- [ ] How do we get a meaningful stacktrace? Does that even matter?
+
 - [x] Get end to end with shrinking working with single integer generator.
 
 - [x] Add `list_of` with shrinking on a list of integers. Use "list is sorted" as the property which should shrink to `[1,0]`.
@@ -63,15 +65,15 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [x] Keep track of seen histories to avoid trying them again.
 
-- [ ] Change `History.shrink_length/1` to remove varying sized chunks.
-
-- [ ] Change `History.shrink_length/1` to remove segments from within the history instead of only at the beginning.
-
-- [ ] Try a new implementation of shrinking. Create multiple histories from a given history. Test all of them against test_fn. 
+- [x] Try a new implementation of shrinking. Create multiple histories from a given history. Test all of them against test_fn. 
 Keep best (shortlex smallest) that still fails the test and re-start the shrinking process with that one as the input.
-Maybe copy more of the elm-test implementation. Create a `Simplify` module or keep shrinking in the `History` module? 
+Copy more of the elm-test implementation. Create a `Shrinker` module.
 
-- [ ] Put raw chunk manipulation functions in `History` and test those first.
+- [x] Put raw chunk manipulation functions in `History` and test them.
+
+- [x] Implement binary search for finding smaller interesting values within the PRNG history.
+
+- [ ] Store `length` in `History` struct? This would make some operations more efficient.
 
 - [ ] Add support for generating integers larger than the internal representation of the PRNG history which is currently a 32-bit integer. This requires consuming more than one value. The `next` funciton probably needs a byte_count parameter.
 
@@ -102,6 +104,8 @@ Maybe flatten the structure while keeping `random/0` and `hardcoded/1` construct
 - [ ] Run the shrinking challenges (https://github.com/jlink/shrinking-challenge)
 
 - [ ] Publish to Hex.pm
+
+- [ ] add `mix dialyzer` to GitHub action
 
 ### How do we make generators composible? 
 
@@ -141,15 +145,15 @@ How does it find possible smaller histories? By using some set of strategies or 
 
 When it finds a valid smaller history, then starts over with that one.
 
-Individually shrink integers. Try zero, divide by 2, subtract 1, and removing from history.
+Individually shrink integers using binary search.
 
-Keep track of histories that have been used/seen to avoid retrying them.
+Keep track of histories that have been used/seen to avoid retrying them. After refactoring into `Shrinker` module, this was not necessary.
 
 Do we shrink the first value and then shrink the rest of the history? That doesn't really work. Some shrinking needs to operate on later values only.
 
-Only feed used history into next round of shrinking? Discard unused values at the end of history.
+- [ ] Only feed used history into next round of shrinking? Discard unused values at the end of history.
 
-Storing larger integers might make shrinking less efficient because it takes longer to reach low values.
+Storing larger integers might make shrinking less efficient because it takes longer to reach low values. Binary search solves this issue.
 
 Is the process of rerunning the test and trying further shrinking similar to genetic algorithms?
 For a given test, this shouldn’t need to be parallelized.
@@ -179,20 +183,3 @@ Just use `check_all` directly without the macros. Add macros later.
 How important is it for `Decorum.uniform_integer/1` to produce uniformly random values?
 I tried the code from https://rosettacode.org/wiki/Verify_distribution_uniformity/Chi-squared_test and its `chi2IsUniform/2` function returned false for all the examples I ran.
 The `chi2Probability/2` results were around `1.69e-13` when they were expected to be greater than `0.05`.
-
-```elixir
-  # non-stream version of shrinking a single integer
-  def shrink_int(i) do
-    shrink_int(i - 1, MapSet.new([0])) |> Enum.reverse()
-  end
-
-  defp shrink_int(i, seen) when i < 0, do: seen
-
-  defp shrink_int(i, seen) do
-    if MapSet.member?(seen, i) do
-      seen
-    else
-      shrink_int(div(i, 2), seen |> MapSet.put(i) |> MapSet.put(i - 1))
-    end
-  end
-```

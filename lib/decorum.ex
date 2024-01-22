@@ -3,19 +3,21 @@ defmodule Decorum do
   Documentation for `Decorum`.
   """
 
-  alias Decorum.History
   alias Decorum.Prng
+  alias Decorum.Shrinker
 
-  @type generator_fun(a) :: (Prng.t() -> {a, Prng.t()})
+  @type value :: term()
 
-  @type t(a) :: %__MODULE__{generator: generator_fun(a)}
+  @type generator_fun(value) :: (Prng.t() -> {value, Prng.t()})
+
+  @type t(value) :: %__MODULE__{generator: generator_fun(value)}
 
   defstruct [:generator]
 
   @doc """
   Helper for creating Decorum structs from a generator function.
   """
-  @spec new(generator_fun(a)) :: t(a) when a: term()
+  @spec new(generator_fun(value)) :: t(value)
   def new(generator) when is_function(generator, 1) do
     %__MODULE__{generator: generator}
   end
@@ -26,7 +28,7 @@ defmodule Decorum do
   Takes a Decorum struct and a Prng struct and returns a lazy Enumerable
   of generated values.
   """
-  @spec stream(t(a), Prng.t()) :: Enumerable.t(a) when a: term()
+  @spec stream(t(value), Prng.t()) :: Enumerable.t(value)
   def stream(%__MODULE__{generator: generator}, prng) do
     Stream.unfold(prng, generator)
   end
@@ -43,71 +45,37 @@ defmodule Decorum do
 
   TODO: Create a Decorum.Error and raise that instead of ExUnit.AssertionError.
   """
-  @spec check_all(t(a), (a -> nil)) :: :ok when a: term()
-  def check_all(%__MODULE__{generator: generator}, test_fn) do
+  @spec check_all(t(value), (value -> nil)) :: :ok
+  def check_all(%__MODULE__{generator: generator}, test_fn) when is_function(test_fn, 1) do
     1..100
     |> Enum.each(fn _ ->
       {value, prng} = generator.(Prng.random())
 
-      try do
-        test_fn.(value)
-      rescue
-        exception ->
-          try do
-            shrink(Prng.get_history(prng), generator, test_fn, MapSet.new())
-          rescue
-            shrunk_exception ->
-              reraise shrunk_exception, __STACKTRACE__
-          else
-            _ -> reraise exception, __STACKTRACE__
-          end
+      case check(test_fn, value) do
+        {:error, message} ->
+          Shrinker.shrink(check(test_fn), generator, value, Prng.get_history(prng), message)
+
+        :ok ->
+          :ok
       end
     end)
   end
 
-  defp shrink([], _generator, _test_fn, _seen), do: :ok
-
-  defp shrink(history, generator, test_fn, seen) do
-    {seen, new_history, exception, stacktrace} =
-      history
-      |> History.shrink()
-      |> Enum.take(200)
-      |> Enum.reduce_while({seen, history, nil, nil}, fn hist, {seen, _, _, _} ->
-        if MapSet.member?(seen, hist) do
-          {:cont, {seen, history, nil, nil}}
-        else
-          seen = MapSet.put(seen, hist)
-
-          try do
-            {value, _} = generator.(Prng.hardcoded(hist))
-            test_fn.(value)
-            {:cont, {seen, hist, nil, nil}}
-          rescue
-            Decorum.Prng.EmptyHistoryError ->
-              {:cont, {seen, history, nil, nil}}
-
-            exception ->
-              {:halt, {seen, hist, exception, __STACKTRACE__}}
-          end
-        end
-      end)
-
-    if new_history != history do
-      try do
-        shrink(new_history, generator, test_fn, seen)
-      rescue
-        shrunk_exception ->
-          reraise shrunk_exception, __STACKTRACE__
-      else
-        _ ->
-          if exception != nil do
-            reraise exception, stacktrace
-          else
-            :ok
-          end
-      end
-    else
+  @spec check((value -> nil), value) :: Shrinker.check_result()
+  def check(test_fn, test_value) when is_function(test_fn, 1) do
+    try do
+      test_fn.(test_value)
       :ok
+    rescue
+      exception ->
+        {:error, exception.message}
+    end
+  end
+
+  @spec check((value -> nil)) :: Shrinker.check_function(value)
+  def check(test_fn) do
+    fn test_value ->
+      check(test_fn, test_value)
     end
   end
 
@@ -126,7 +94,7 @@ defmodule Decorum do
   @doc """
   Create a generator that is not random and always returns the same value.
   """
-  @spec constant(a) :: t(a) when a: term()
+  @spec constant(value) :: t(value)
   def constant(value) do
     new(fn prng -> {value, prng} end)
   end
@@ -180,7 +148,7 @@ defmodule Decorum do
 
   `generators` must be a list.
   """
-  @spec one_of([t(a)]) :: t(a) when a: term()
+  @spec one_of([t(value)]) :: t(value)
   def one_of([]) do
     raise "one_of needs at least one item"
   end
@@ -203,7 +171,7 @@ defmodule Decorum do
   Use a biased coin flip to determine if another value should be gerenated
   or the list should be terminated.
   """
-  @spec list_of(t(a)) :: t([a]) when a: term()
+  @spec list_of(t(value)) :: t([value])
   def list_of(%Decorum{generator: generator}) do
     new(fn prng ->
       Stream.cycle(1..1)
@@ -220,7 +188,7 @@ defmodule Decorum do
     end)
   end
 
-  @spec list_of_length(t(a), non_neg_integer()) :: [t(a)] when a: term()
+  @spec list_of_length(t(value), non_neg_integer()) :: t(list(value))
   def list_of_length(decorum, length) do
     Stream.repeatedly(fn -> decorum end)
     |> Enum.take(length)
@@ -257,7 +225,7 @@ defmodule Decorum do
   `fun` is a function that takes a value from the given generator and
   returns a generator.
   """
-  @spec and_then(t(a), (a -> t(b))) :: t(b) when a: term(), b: term()
+  @spec and_then(t(a), (a -> t(b))) :: t(b) when a: value, b: value
   def and_then(%Decorum{generator: generator}, fun) when is_function(fun, 1) do
     new(fn prng ->
       {value, prng} = generator.(prng)
@@ -272,7 +240,7 @@ defmodule Decorum do
   Returns a generator where each element is the result of invoking fun
   on each corresponding element of the given generator.
   """
-  @spec map(t(a), (a -> b)) :: t(b) when a: term(), b: term()
+  @spec map(t(a), (a -> b)) :: t(b) when a: value, b: value
   def map(%Decorum{generator: generator}, fun) when is_function(fun, 1) do
     new(fn prng ->
       {value, prng} = generator.(prng)
@@ -285,7 +253,7 @@ defmodule Decorum do
 
   Zips corresponding elements from two generators into a generator of tuples.
   """
-  @spec zip(t(a), t(b)) :: t({a, b}) when a: term(), b: term()
+  @spec zip(t(a), t(b)) :: t({a, b}) when a: value, b: value
   def zip(%Decorum{generator: generator_a}, %Decorum{generator: generator_b}) do
     new(fn prng ->
       {value_a, prng} = generator_a.(prng)
@@ -325,7 +293,8 @@ defmodule Decorum do
   end
 
   defp loop_until(_prng, _generator, _fun, 0) do
-    raise FilterTooNarrowError, "Decorum.filter did not find a matching value. Try widening the filter."
+    raise FilterTooNarrowError,
+          "Decorum.filter did not find a matching value. Try widening the filter."
   end
 
   defp loop_until(prng, generator, fun, limit) do
@@ -346,7 +315,7 @@ defmodule Decorum do
   Use `limit` to specify how many times the generator should be called before raising an error.
 
   """
-  @spec filter(t(a), (a -> boolean)) :: t(a) when a: term()
+  @spec filter(t(value), (value -> boolean)) :: t(value)
   def filter(%Decorum{generator: generator}, fun, limit \\ 25) do
     new(fn prng ->
       loop_until(prng, generator, fun, limit)
