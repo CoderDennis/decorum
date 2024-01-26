@@ -66,14 +66,16 @@ defmodule Decorum.Shrinker do
   defp shrink_by_chunks(check_function, generator, history) do
     history_length = Enum.count(history)
 
-    chunks = min(history_length, 4)..1
-    |> Enum.flat_map(fn chunk_length ->
-      Chunk.chunks(history_length, chunk_length)
-    end)
+    chunks =
+      min(history_length, 4)..1
+      |> Enum.flat_map(fn chunk_length ->
+        Chunk.chunks(history_length, chunk_length)
+      end)
 
     Stream.concat([
-      Stream.map(chunks, &(History.delete_chunk(history, &1))),
-      Stream.map(chunks, &(History.replace_chunk_with_zero(history, &1)))
+      Stream.map(chunks, &History.delete_chunk(history, &1)),
+      Stream.map(chunks, &History.replace_chunk_with_zero(history, &1))
+      # Stream.map(chunks, &History.sort_chunk(history, &1))
     ])
     |> Enum.filter(&(&1 != history))
     |> Enum.map(&check_history(&1, generator, check_function))

@@ -65,11 +65,17 @@ defmodule Decorum.History do
   def sort_chunk(history, chunk) do
     {pre, chunk_elements, post} = get_chunked_parts(history, chunk)
 
-    Enum.concat([
-      pre,
-      Enum.sort(chunk_elements),
-      post
-    ])
+    sorted = Enum.sort(chunk_elements)
+
+    if sorted != chunk_elements do
+      Enum.concat([
+        pre,
+        sorted,
+        post
+      ])
+    else
+      history
+    end
   end
 
   @spec get_chunk_elements(t(), Chunk.t()) :: t()

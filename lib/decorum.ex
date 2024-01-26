@@ -210,10 +210,6 @@ defmodule Decorum do
     end)
   end
 
-  def uniform_integer do
-    uniform_integer(Integer.pow(2, 32) - 1)
-  end
-
   ## Helpers
 
   @doc """
