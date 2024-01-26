@@ -7,13 +7,10 @@ defmodule ShrinkingChallengeTest do
   Implementing these tests to exercise the Decorum shrinker.
   """
 
-  @tag :skip
   test "bound5" do
-    # runs for over 5 seconds with mix test --seed 558117
-    # takes over 38 seconds with seed 631266
-    # fails with seed 299458 because empty lists are not together.
-    assert_raise Decorum.PropertyError,
-                 ~r/\[\], \[\]/,
+    # runs for about 4 seconds with mix test --seed 558117
+    # takes about 21 seconds with seed 631266
+    %Decorum.PropertyError{value: value} = assert_raise Decorum.PropertyError,
                  fn ->
                    Decorum.integer(-32768..32767)
                    |> Decorum.list_of()
@@ -28,6 +25,8 @@ defmodule ShrinkingChallengeTest do
                               5 * 256
                    end)
                  end
+    #assert that 3 of the lists are empty
+    assert Enum.count(value, &(&1 == [])) == 3
   end
 
   defp normalize(n) do

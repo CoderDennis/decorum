@@ -33,7 +33,7 @@ defmodule PrngTest do
 
     prng = Prng.hardcoded(history)
     {1, prng} = Prng.next!(prng)
-    assert_raise Decorum.Prng.EmptyHistoryError, fn -> Prng.next!(prng) end
+    assert_raise Decorum.EmptyHistoryError, fn -> Prng.next!(prng) end
   end
 
   test "hardcoded Prng keeps track of the history it uses" do

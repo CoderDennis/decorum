@@ -40,14 +40,18 @@ defmodule Decorum.History do
   end
 
   @spec replace_chunk(t(), Chunk.t(), t()) :: t()
-  def replace_chunk(history, chunk, new_chunk) do
-    {pre, _, post} = get_chunked_parts(history, chunk)
+  def replace_chunk(history, chunk, new_values) do
+    {pre, old_values, post} = get_chunked_parts(history, chunk)
 
-    Enum.concat([
-      pre,
-      new_chunk,
-      post
-    ])
+    if old_values != new_values do
+      Enum.concat([
+        pre,
+        new_values,
+        post
+      ])
+    else
+      history
+    end
   end
 
   @spec replace_chunk_with_zero(t(), Chunk.t()) :: t()

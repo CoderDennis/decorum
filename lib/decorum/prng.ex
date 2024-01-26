@@ -14,11 +14,6 @@ defmodule Decorum.Prng do
   @type t :: prng
   @type prng :: __MODULE__.Random.t() | __MODULE__.Hardcoded.t()
 
-  defmodule EmptyHistoryError do
-    @moduledoc false
-    defexception [:message]
-  end
-
   defmodule Random do
     @moduledoc false
     @type t :: %__MODULE__{state: :rand.state(), history: Decorum.History.t()}
@@ -61,7 +56,7 @@ defmodule Decorum.Prng do
 
     @spec next!(prng :: t()) :: {non_neg_integer(), t()}
     def next!(%__MODULE__{unusedHistory: []} = _prng) do
-      raise EmptyHistoryError, "PRNG history is empty"
+      raise Decorum.EmptyHistoryError, "PRNG history is empty"
     end
 
     def next!(%__MODULE__{history: history, unusedHistory: [value | rest]} = prng) do

@@ -1,4 +1,4 @@
 defmodule Decorum.PropertyError do
   @moduledoc false
-  defexception [:message]
+  defexception [:message, :value]
 end

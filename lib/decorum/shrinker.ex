@@ -20,6 +20,8 @@ defmodule Decorum.Shrinker do
 
   @type check_function(value) :: (value -> check_result())
 
+  @type check_history_result(value) :: :fail | {:pass, History.t(), value, String.t()}
+
   @doc """
   Takes a PRNG history and shrinks it to smaller values
   using a number of chunk manipulation strategies.
@@ -35,48 +37,47 @@ defmodule Decorum.Shrinker do
         ) :: :ok
   def shrink(_, _, value, [], message) do
     # TODO: figure out why this function gets called with an empty history.
-    raise Decorum.PropertyError, Enum.join([inspect(value), message], "\n\n")
+    raise Decorum.EmptyHistoryError,
+      message: Enum.join([inspect(value), message], "\n\n"),
+      value: value
   end
 
   def shrink(check_function, generator, value, history, message) do
+    case shrink_by_chunks(check_function, generator, history) do
+      {:pass, history, value, message} ->
+        shrink(check_function, generator, value, history, message)
+
+      :fail ->
+        {new_value, new_history, new_message} =
+          binary_search(check_function, generator, value, message, history)
+
+        if new_history != history do
+          shrink(check_function, generator, new_value, new_history, new_message)
+        else
+          raise Decorum.PropertyError,
+            message: Enum.join([inspect(value), message], "\n\n"),
+            value: value
+        end
+    end
+  end
+
+  @spec shrink_by_chunks(check_function(value), Decorum.generator_fun(value), History.t()) ::
+          check_history_result(value)
+  defp shrink_by_chunks(check_function, generator, history) do
     history_length = Enum.count(history)
 
-    valid_histories =
-      1..min(history_length, 4)
-      |> Enum.flat_map(fn chunk_length ->
-        Chunk.chunks(history_length, chunk_length)
-      end)
-      |> Enum.flat_map(fn chunk ->
-        [
-          History.delete_chunk(history, chunk),
-          History.replace_chunk_with_zero(history, chunk)
-        ]
-      end)
-      |> Enum.reduce([], fn hist, valid_histories ->
-        if History.compare(hist, history) == :lt do
-          case check_history(hist, generator, check_function) do
-            :fail -> valid_histories
-            {:pass, value, message} -> [{hist, value, message} | valid_histories]
-          end
-        else
-          valid_histories
-        end
-      end)
-      |> Enum.sort_by(fn {hist, _, _} -> hist end, History)
+    chunks = min(history_length, 4)..1
+    |> Enum.flat_map(fn chunk_length ->
+      Chunk.chunks(history_length, chunk_length)
+    end)
 
-    if Enum.any?(valid_histories) do
-      {history, value, message} = List.first(valid_histories)
-      shrink(check_function, generator, value, history, message)
-    else
-      {new_value, new_history, new_message} =
-        binary_search(check_function, generator, value, message, history)
-
-      if new_history != history do
-        shrink(check_function, generator, new_value, new_history, new_message)
-      end
-    end
-
-    raise Decorum.PropertyError, Enum.join([inspect(value), message], "\n\n")
+    Stream.concat([
+      Stream.map(chunks, &(History.delete_chunk(history, &1))),
+      Stream.map(chunks, &(History.replace_chunk_with_zero(history, &1)))
+    ])
+    |> Enum.filter(&(&1 != history))
+    |> Enum.map(&check_history(&1, generator, check_function))
+    |> Enum.find(:fail, &(&1 != :fail))
   end
 
   defp binary_search(check_function, generator, value, message, [first_value | post_history]) do
@@ -137,7 +138,7 @@ defmodule Decorum.Shrinker do
           high
         )
 
-      {:pass, value, message} ->
+      {:pass, _, value, message} ->
         binary_search(
           check_function,
           generator,
@@ -152,7 +153,7 @@ defmodule Decorum.Shrinker do
   end
 
   @spec check_history(History.t(), Decorum.generator_fun(value), check_function(value)) ::
-          :fail | {:pass, value, String.t()}
+          check_history_result(value)
   defp check_history([], _, _), do: :fail
 
   defp check_history(history, generator, check_function) do
@@ -163,10 +164,10 @@ defmodule Decorum.Shrinker do
 
       case check_function.(value) do
         :ok -> :fail
-        {:error, message} -> {:pass, value, message}
+        {:error, message} -> {:pass, history, value, message}
       end
     rescue
-      Prng.EmptyHistoryError -> :fail
+      Decorum.EmptyHistoryError -> :fail
     end
   end
 end

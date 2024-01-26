@@ -54,6 +54,9 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 - [x] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle.
 
 - [ ] Format raised error message to include generated values and shrinking statistics.
+Use Telemetry for metrics and stats?
+
+- [x] Include `value` field in `PropertyError`.
 
 - [ ] How do we get a meaningful stacktrace? Does that even matter?
 
@@ -63,7 +66,7 @@ With no history it needs to use the same seed as ExUnit, which happens automatic
 
 - [x] Change `History.shrink_length/1` to remove one item at a time and fix the resulting error and occasional timeout.
 
-- [x] Keep track of seen histories to avoid trying them again.
+- [x] Keep track of seen histories to avoid trying them again. (No longer needed after refactoring into `Shrinker` module.)
 
 - [x] Try a new implementation of shrinking. Create multiple histories from a given history. Test all of them against test_fn. 
 Keep best (shortlex smallest) that still fails the test and re-start the shrinking process with that one as the input.
