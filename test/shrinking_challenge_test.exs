@@ -8,25 +8,45 @@ defmodule ShrinkingChallengeTest do
   """
 
   test "bound5" do
-    # runs for about 4 seconds with mix test --seed 558117
-    # takes about 21 seconds with seed 631266
-    %Decorum.PropertyError{value: value} = assert_raise Decorum.PropertyError,
-                 fn ->
-                   Decorum.integer(-32768..32767)
-                   |> Decorum.list_of()
-                   |> Decorum.filter(fn lst ->
-                     sum(lst) < 256
-                   end)
-                   |> Decorum.list_of_length(5)
-                   |> Decorum.check_all(fn lists ->
-                     assert lists
-                            |> Enum.concat()
-                            |> sum() <
-                              5 * 256
-                   end)
-                 end
-    #assert that 3 of the lists are empty
+    %Decorum.PropertyError{value: value} =
+      assert_raise Decorum.PropertyError,
+                   fn ->
+                     Decorum.integer(-32768..32767)
+                     |> Decorum.list_of()
+                     |> Decorum.filter(fn lst ->
+                       sum(lst) < 256
+                     end)
+                     |> Decorum.list_of_length(5)
+                     |> Decorum.check_all(fn lists ->
+                       assert lists
+                              |> Enum.concat()
+                              |> sum() <
+                                5 * 256
+                     end)
+                   end
+
+    # assert that 3 of the lists are empty
+    # IO.inspect(value)
     assert Enum.count(value, &(&1 == [])) == 3
+  end
+
+  test "large union list" do
+    # takes over 34 seconds with seed 590589
+    %Decorum.PropertyError{value: value} =
+      assert_raise Decorum.PropertyError,
+                   fn ->
+                     Decorum.integer(-4294967296..4294967295)
+                     |> Decorum.list_of()
+                     |> Decorum.list_of()
+                     |> Decorum.check_all(fn lists ->
+                       assert lists
+                              |> Enum.concat()
+                              |> Enum.uniq()
+                              |> Enum.count() < 5
+                     end)
+                   end
+
+    assert value == [[1, 2, 3, 4, 0]]
   end
 
   defp normalize(n) do

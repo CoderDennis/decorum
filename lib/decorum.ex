@@ -178,7 +178,7 @@ defmodule Decorum do
       |> Enum.reduce_while({[], prng}, fn _, {list, prng} ->
         {flip, prng} = Prng.next!(prng)
 
-        if rem(flip, 10) > 0 do
+        if rem(flip, 8) > 0 do
           {value, prng} = generator.(prng)
           {:cont, {[value | list], prng}}
         else

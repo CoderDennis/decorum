@@ -66,7 +66,7 @@ Use Telemetry for metrics and stats?
 
 - [x] Change `History.shrink_length/1` to remove one item at a time and fix the resulting error and occasional timeout.
 
-- [x] Keep track of seen histories to avoid trying them again. (No longer needed after refactoring into `Shrinker` module.)
+- [x] Keep track of seen histories to avoid trying them again. (No longer needed after refactoring into `Shrinker` module?)
 
 - [x] Try a new implementation of shrinking. Create multiple histories from a given history. Test all of them against test_fn. 
 Keep best (shortlex smallest) that still fails the test and re-start the shrinking process with that one as the input.
@@ -75,6 +75,8 @@ Copy more of the elm-test implementation. Create a `Shrinker` module.
 - [x] Put raw chunk manipulation functions in `History` and test them.
 
 - [x] Implement binary search for finding smaller interesting values within the PRNG history.
+
+- [ ] Change `list_of` to have some maximum list size. Adjust probability as it gets closer to the max? See https://github.com/elm-explorations/test/blob/9669a27d84fc29175364c7a60d5d700771a2801e/src/Fuzz.elm#L678
 
 - [ ] Store `length` in `History` struct? This would make some operations more efficient.
 
@@ -108,7 +110,7 @@ Maybe flatten the structure while keeping `random/0` and `hardcoded/1` construct
 
 - [ ] Publish to Hex.pm
 
-- [ ] add `mix dialyzer` to GitHub action
+- [ ] add `mix dialyzer` to GitHub action see https://github.com/jeremyjh/dialyxir/blob/master/docs/github_actions.md 
 
 ### How do we make generators composible? 
 
