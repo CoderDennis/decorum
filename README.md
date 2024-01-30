@@ -18,7 +18,7 @@ I'm currently in proof-of-concept mode. I've borowed some concepts from [StreamD
 
 There are no macros yet, so property tests are just regular ExUnit tests with names starting with "property" by convention. 
 
-See [NOTES.md](NOTES.md) for my ongoing thoughts, questions, and TODOs.
+See [Implementation Notes](NOTES.md) for my ongoing thoughts, questions, and TODOs.
 
 ## Background
 

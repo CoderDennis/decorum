@@ -17,6 +17,10 @@ defmodule Decorum.MixProject do
       package: [
         licenses: ["MIT"],
         links: %{"GitHub" => @repo_url}
+      ],
+      docs: [
+        extras: ["README.md", "NOTES.md"],
+        main: "readme"
       ]
     ]
   end

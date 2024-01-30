@@ -1,11 +1,5 @@
 defmodule Decorum.History do
-  @moduledoc """
-  History is currently a list of non-negative integers.
-
-  It might make sense to expand it to a structure where groups of random bytes could be labeled.
-
-  The original Hypothesis implementation uses labels. The Elm test implementation does not.
-  """
+  @moduledoc false
 
   alias Decorum.History.Chunk
 

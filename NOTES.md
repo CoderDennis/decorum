@@ -1,3 +1,5 @@
+# Implementation Notes
+
 These are my thoughts and notes while investigating how this library should be implemented.
 I'm including it in the repo to preserve revision history as I find answers to my own questions and evolve the design.
 
@@ -108,7 +110,9 @@ Maybe flatten the structure while keeping `random/0` and `hardcoded/1` construct
 
 - [ ] Run the shrinking challenges (https://github.com/jlink/shrinking-challenge)
 
-- [ ] Publish to Hex.pm
+- [x] Publish to Hex.pm
+
+- [x] Clean up docs. The `Decorum` and maybe `Prng` modules are the only ones that need to show up in the docs.
 
 - [ ] add `mix dialyzer` to GitHub action see https://github.com/jeremyjh/dialyxir/blob/master/docs/github_actions.md 
 

@@ -1,15 +1,6 @@
 defmodule Decorum.Shrinker do
-  @moduledoc """
+  @moduledoc false
 
-  Binary Search (from Martin)
-  We always try new values - the floored average of low and high. In each new loop we change either low or high to be the average, never both. So something like:
-
-  0,100 -> middle 50; shrink attempt failed (either value didn't generate or it passed the test) so we go up (set low := mid), because we know that at all times, _high_ works and _low_ doesn't work and we want to keep it that way
-  50,100 -> middle 75; shrink attempt passed so we go down (set high := mid)
-  50,75 -> middle 62; shrink attempt succeeded so we go down
-  ...
-  etc. until we get to the moment where low and high are next to each other (eg. 53,54) and we return _high_ as the found minimum.
-  """
   alias Decorum.History
   alias Decorum.History.Chunk
   alias Decorum.Prng

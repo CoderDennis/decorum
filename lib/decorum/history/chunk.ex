@@ -1,4 +1,6 @@
 defmodule Decorum.History.Chunk do
+  @moduledoc false
+
   defstruct [:start, :length]
 
   @type t :: %__MODULE__{start: non_neg_integer(), length: non_neg_integer()}
