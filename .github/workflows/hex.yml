@@ -1,3 +1,5 @@
+name: Publish to Hex.pm
+
 on:
   push:
     tags:
