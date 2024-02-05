@@ -80,6 +80,8 @@ Copy more of the elm-test implementation. Create a `Shrinker` module.
 
 - [ ] Change `list_of` to have some maximum list size. Adjust probability as it gets closer to the max? See https://github.com/elm-explorations/test/blob/9669a27d84fc29175364c7a60d5d700771a2801e/src/Fuzz.elm#L678
 
+- [ ] Add the concept of generation size and re-sizing from StreamData?
+
 - [ ] Store `length` in `History` struct? This would make some operations more efficient.
 
 - [ ] Add support for generating integers larger than the internal representation of the PRNG history which is currently a 32-bit integer. This requires consuming more than one value. The `next` funciton probably needs a byte_count parameter.
@@ -92,13 +94,13 @@ Copy more of the elm-test implementation. Create a `Shrinker` module.
 
 - [ ] Add configuration option for how many times to run the test body.
 
+- [ ] Only feed used history into next round of shrinking? Discard unused values at the end of history.
+
 - [ ] Implement other basic generators such as `atom`, `binary`, `string`, etc.
 
 - [x] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values.
 It's essentially the same as `Enum.zip/1` but for Decorum generators. 
 It looks like StreamData has a generator named `tuple` which does this with a tuple of generators as its input.
-
-- [ ] Add the concept of generation size and re-sizing from StreamData?
 
 - [ ] Rename Prng module to Random?
 I don’t love the name Prng.
@@ -115,6 +117,8 @@ Maybe flatten the structure while keeping `random/0` and `hardcoded/1` construct
 - [x] Clean up docs. The `Decorum` and maybe `Prng` modules are the only ones that need to show up in the docs.
 
 - [ ] add `mix dialyzer` to GitHub action see https://github.com/jeremyjh/dialyxir/blob/master/docs/github_actions.md 
+
+- [ ] Create seperate doc sections of functions within `Decorum` module: helpers, property testing, and generators. 
 
 ### How do we make generators composible? 
 
@@ -143,11 +147,11 @@ It could behave like a Stream by default and internally to `check_all` the state
 
 ### What is a Shrinker?
 
-A function that takes a PRNG history, a generator, and a test function and searches through a stream of shortlex smaller histories.
+A function that takes a PRNG history, a generator, and a test function and searches through a set of shortlex smaller histories.
 
 Iterate through those histories until:
 - A. we find one that still fails the test
-- B. We run out of possible smaller histories
+- B. We don't find any that still fail the test after a full shrinking pass.
 - C. We try some maximum number of times.
 
 How does it find possible smaller histories? By using some set of strategies or passes?
@@ -160,12 +164,11 @@ Keep track of histories that have been used/seen to avoid retrying them. After r
 
 Do we shrink the first value and then shrink the rest of the history? That doesn't really work. Some shrinking needs to operate on later values only.
 
-- [ ] Only feed used history into next round of shrinking? Discard unused values at the end of history.
-
 Storing larger integers might make shrinking less efficient because it takes longer to reach low values. Binary search solves this issue.
 
-Is the process of rerunning the test and trying further shrinking similar to genetic algorithms?
-For a given test, this shouldn’t need to be parallelized.
+Is the process of rerunning the test and trying further shrinking similar to genetic algorithms? Not really. I do think it's similar, but I didn't find any value in trying to implement it that way over just copying how other libraries based on Hypothesis work.
+
+For a given test, shrinking shouldn’t need to be parallelized.
 
 Test functions passed to `StreamData.check_all` do not raise exceptions. They return `{:ok, map()}` or `{:error, map()}`.
 In the error tuple, the map contains details about original and shrunk failures.
