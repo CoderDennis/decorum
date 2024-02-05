@@ -153,11 +153,11 @@ defmodule Decorum.Shrinker do
     prng = Prng.hardcoded(history)
 
     try do
-      {value, _} = generator.(prng)
+      {value, prng} = generator.(prng)
 
       case check_function.(value) do
         :ok -> :fail
-        {:error, message} -> {:pass, history, value, message}
+        {:error, message} -> {:pass, Prng.get_history(prng), value, message}
       end
     rescue
       Decorum.EmptyHistoryError -> :fail

@@ -94,7 +94,9 @@ Copy more of the elm-test implementation. Create a `Shrinker` module.
 
 - [ ] Add configuration option for how many times to run the test body.
 
-- [ ] Only feed used history into next round of shrinking? Discard unused values at the end of history.
+- [x] Only feed used history into next round of shrinking? Discard unused values at the end of history.
+Currently, this doesn't work with the implementation of binary search, but it does work for the shrinking
+by chunks.
 
 - [ ] Implement other basic generators such as `atom`, `binary`, `string`, etc.
 
