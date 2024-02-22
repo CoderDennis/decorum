@@ -78,6 +78,8 @@ Copy more of the elm-test implementation. Create a `Shrinker` module.
 
 - [x] Implement binary search for finding smaller interesting values within the PRNG history.
 
+- [ ] Make a generic version of binary search?
+
 - [ ] Change `list_of` to have some maximum list size. Adjust probability as it gets closer to the max? See https://github.com/elm-explorations/test/blob/9669a27d84fc29175364c7a60d5d700771a2801e/src/Fuzz.elm#L678
 
 - [ ] Add the concept of generation size and re-sizing from StreamData?
