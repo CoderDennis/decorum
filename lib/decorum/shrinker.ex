@@ -79,7 +79,7 @@ defmodule Decorum.Shrinker do
 
   defp binary_search(_check_function, _generator, value, message, pre_history, [], low, high)
        when low >= high - 1 do
-    {value, pre_history ++ [high], message}
+    {value, Enum.reverse([high | pre_history]), message}
   end
 
   defp binary_search(
@@ -98,7 +98,7 @@ defmodule Decorum.Shrinker do
       generator,
       value,
       message,
-      pre_history ++ [high],
+      [high | pre_history],
       post_history,
       0,
       next
@@ -116,7 +116,7 @@ defmodule Decorum.Shrinker do
          high
        ) do
     mid = div(low + high, 2)
-    history = pre_history ++ [mid] ++ post_history
+    history = Enum.reverse([mid | pre_history]) ++ post_history
 
     case check_history(history, generator, check_function) do
       :fail ->
