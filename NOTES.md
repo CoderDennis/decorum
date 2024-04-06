@@ -124,6 +124,8 @@ Maybe flatten the structure while keeping `random/0` and `hardcoded/1` construct
 
 - [ ] Create seperate doc sections of functions within `Decorum` module: helpers, property testing, and generators. 
 
+- [ ] Should generators be a behavior? The generate function is a good use case for a callback. Does that effect the Enumerable implementation?
+
 ### How do we make generators composible? 
 
 Users should be able to create new generators based on the library generators.

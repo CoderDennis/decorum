@@ -26,16 +26,32 @@ defmodule ShrinkingChallengeTest do
                    end
 
     # assert that 3 of the lists are empty
-    # IO.inspect(value)
     assert Enum.count(value, &(&1 == [])) == 3
   end
 
-  test "large union list" do
-    # takes over 34 seconds with seed 590589
+  @tag :skip
+  test "difference 1" do
     %Decorum.PropertyError{value: value} =
       assert_raise Decorum.PropertyError,
                    fn ->
-                     Decorum.integer(-4294967296..4294967295)
+                     Decorum.zip(
+                       Decorum.integer(0..1000),
+                       Decorum.integer(0..1000)
+                     )
+                     |> Decorum.check_all(fn {x, y} ->
+                       x < 10 or x != y
+                     end)
+                   end
+
+    assert value == [10, 10]
+  end
+
+  test "large union list" do
+    # takes 31.8 seconds with seed 804291
+    %Decorum.PropertyError{value: value} =
+      assert_raise Decorum.PropertyError,
+                   fn ->
+                     Decorum.integer(-4_294_967_296..4_294_967_295)
                      |> Decorum.list_of()
                      |> Decorum.list_of()
                      |> Decorum.check_all(fn lists ->
