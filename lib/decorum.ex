@@ -10,6 +10,8 @@ defmodule Decorum do
 
   @type generator_fun(value) :: (Prng.t() -> {value, Prng.t()})
 
+  @type max_length :: non_neg_integer() | :none
+
   @type t(value) :: %__MODULE__{generator: generator_fun(value)}
 
   defstruct [:generator]
@@ -178,7 +180,7 @@ defmodule Decorum do
 
   When `max_length` is `:none` the probablility of generating another value is around 7/8.
   """
-  @spec list_of(t(value), non_neg_integer() | :none) :: t([value])
+  @spec list_of(t(value), max_length()) :: t([value])
   def list_of(%Decorum{generator: generator}, max_length \\ :none) do
     bias = fn flip, index ->
       case max_length do
@@ -222,6 +224,69 @@ defmodule Decorum do
       {value, prng} = Prng.next!(prng)
       {rem(value, max + 1), prng}
     end)
+  end
+
+  @doc """
+  Generates bytes.
+
+  A byte is an integer between `0` and `255`.
+  """
+  @spec byte() :: t(byte())
+  def byte() do
+    uniform_integer(255)
+  end
+
+  @doc """
+  Generates binaries.
+
+  `max_length` is used to cap the length of the binary. It defaults to `:none` and is the same as in `list_of/2`.
+  """
+  @spec binary(max_length()) :: t(binary())
+  def binary(max_length \\ :none) do
+    map(list_of(byte(), max_length), &:binary.list_to_bin/1)
+  end
+
+  @doc """
+  Generates alphanumeric atoms.
+  """
+  @spec atom(max_length()) :: t(atom())
+  def atom(max_length \\ :none) do
+    atom_chars =
+      [?a..?z, ?A..?Z, ?0..?9, [?_], [?@]]
+      |> char_map()
+
+    max_length =
+      case max_length do
+        :none -> :none
+        length when length > 255 -> raise ArgumentError, "atoms cannot be over 255 characters"
+        length -> length - 1
+      end
+
+    rest =
+      (Enum.count(atom_chars) - 1)
+      |> uniform_integer()
+      |> list_of(max_length)
+      |> filter(fn list -> Enum.count(list) < 255 end)
+      |> map(fn indexes -> to_string(Enum.map(indexes, &atom_chars[&1])) end)
+
+    starting_chars =
+      [?a..?z, ?A..?Z, [?_]]
+      |> char_map()
+
+    starting_char =
+      (Enum.count(starting_chars) - 1)
+      |> uniform_integer()
+      |> map(&starting_chars[&1])
+
+    zip(starting_char, rest)
+    |> map(fn {first, rest} -> String.to_atom(<<first, rest::binary>>) end)
+  end
+
+  defp char_map(characters) do
+    characters
+    |> Enum.flat_map(&Enum.to_list/1)
+    |> Enum.with_index(fn ch, i -> {i, ch} end)
+    |> Enum.into(%{})
   end
 
   ## Helpers
