@@ -17,8 +17,8 @@ What is the internal representation of integers in the BEAM? Small integer is 1 
 
 What effect does size of integer stored in PRNG history have on the rand algorithm used? If only storing 32-bit ints, then it doesn't matter.
 
-- [ ] Should we use a bytes as is done in Hypothesis? 
-No matter what size ints we store, when a larger value is requested, we need to use more than one of them.
+- [ ] Should we use a bytes as is done in Hypothesis?
+      No matter what size ints we store, when a larger value is requested, we need to use more than one of them.
 
 Using smaller integers might make it more important to label chunks of random history the way hypothesis does. I couldn’t find the equivalent in the Elm implementation. Martin confirmed that it's not in the Elm code.
 
@@ -27,6 +27,7 @@ Using smaller integers might make it more important to label chunks of random hi
 We sidestep this question by remembering `:rand.state`.
 How does that relate to the given seed?
 From https://hexdocs.pm/ex_unit/1.15.4/ExUnit.html#configure/1-options
+
 > `:seed` - an integer seed value to randomize the test suite. This seed is also mixed with the test module and name to create a new unique seed on every test, which is automatically fed into the :rand module. This provides randomness between tests, but predictable and reproducible results. A :seed of 0 will disable randomization and the tests in each file will always run in the order that they were defined in;
 
 Generators in StreamData create functions that take a seed (it’s called seed,
@@ -34,7 +35,7 @@ but it’s really `:rand.state()`) and keeps track of the next state. Fuzzers in
 The Random prng in Elm also keeps track of the next seed. -- Maybe that's a key ingredient --
 **it doesn't matter what calls to `:rand` are made in other threads if our PRNG is keeping the next seed that it will use.**
 
-PRNG history only needs to be preserved for a single test iteration. In `check_all`, we don't need the history for the whole 100 test runs. We only need it for one that fails a test. 
+PRNG history only needs to be preserved for a single test iteration. In `check_all`, we don't need the history for the whole 100 test runs. We only need it for one that fails a test.
 However, we do need to use a new seed for each run. How do other implementations handle this? https://github.com/elm-explorations/test/blob/master/src/Test/Fuzz.elm has a `stepSeed` function that gets the seed for the next run.
 We can use `:rand.jump()` for the same purpose.
 
@@ -43,20 +44,20 @@ It's important to not specify a new seed so that we're based on the one ExUnit s
 ### TODO:
 
 - [x] On prng playback need to distinguish between no history and getting to the end of the history. Tag as :random or :hardcoded ?
-With no history it needs to use the same seed as ExUnit, which happens automatically because we start with a call to `:rand.jump()`
+      With no history it needs to use the same seed as ExUnit, which happens automatically because we start with a call to `:rand.jump()`
 
 - [x] Simple history replay should be easy to test.
 
 - [x] Hanlde getting to the end of prng history. Change `next/1` to `next!/1` and raise EmptyHistoryError.
 
-- [x] When validating a shrunken history need to distinguish between running out of numbers and no longer failing the test. 
+- [x] When validating a shrunken history need to distinguish between running out of numbers and no longer failing the test.
 
 - [x] Remove `prng` parameter from `check_all` because we need a new one for each test run. Or make it optional.
 
 - [x] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle.
 
 - [ ] Format raised error message to include generated values and shrinking statistics.
-Use Telemetry for metrics and stats?
+      Use Telemetry for metrics and stats?
 
 - [x] Include `value` field in `PropertyError`.
 
@@ -70,9 +71,9 @@ Use Telemetry for metrics and stats?
 
 - [x] Keep track of seen histories to avoid trying them again. (No longer needed after refactoring into `Shrinker` module?)
 
-- [x] Try a new implementation of shrinking. Create multiple histories from a given history. Test all of them against test_fn. 
-Keep best (shortlex smallest) that still fails the test and re-start the shrinking process with that one as the input.
-Copy more of the elm-test implementation. Create a `Shrinker` module.
+- [x] Try a new implementation of shrinking. Create multiple histories from a given history. Test all of them against test_fn.
+      Keep best (shortlex smallest) that still fails the test and re-start the shrinking process with that one as the input.
+      Copy more of the elm-test implementation. Create a `Shrinker` module.
 
 - [x] Put raw chunk manipulation functions in `History` and test them.
 
@@ -80,7 +81,7 @@ Copy more of the elm-test implementation. Create a `Shrinker` module.
 
 - [ ] Make a generic version of binary search?
 
-- [ ] Change `list_of` to have some maximum list size. Adjust probability as it gets closer to the max? See https://github.com/elm-explorations/test/blob/9669a27d84fc29175364c7a60d5d700771a2801e/src/Fuzz.elm#L678
+- [x] Change `list_of` to have some maximum list size. Adjust probability as it gets closer to the max? See https://github.com/elm-explorations/test/blob/9669a27d84fc29175364c7a60d5d700771a2801e/src/Fuzz.elm#L678
 
 - [ ] Add the concept of generation size and re-sizing from StreamData?
 
@@ -97,18 +98,18 @@ Copy more of the elm-test implementation. Create a `Shrinker` module.
 - [ ] Add configuration option for how many times to run the test body.
 
 - [x] Only feed used history into next round of shrinking? Discard unused values at the end of history.
-Currently, this doesn't work with the implementation of binary search, but it does work for the shrinking
-by chunks.
+      Currently, this doesn't work with the implementation of binary search, but it does work for the shrinking
+      by chunks.
 
 - [ ] Implement other basic generators such as `atom`, `binary`, `string`, etc.
 
 - [x] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values.
-It's essentially the same as `Enum.zip/1` but for Decorum generators. 
-It looks like StreamData has a generator named `tuple` which does this with a tuple of generators as its input.
+      It's essentially the same as `Enum.zip/1` but for Decorum generators.
+      It looks like StreamData has a generator named `tuple` which does this with a tuple of generators as its input.
 
 - [ ] Rename Prng module to Random?
-I don’t love the name Prng.
-Maybe flatten the structure while keeping `random/0` and `hardcoded/1` constructor functions.
+      I don’t love the name Prng.
+      Maybe flatten the structure while keeping `random/0` and `hardcoded/1` constructor functions.
 
 - [x] Add `filter/2` function that takes a generator and a predicate and filters out values that don't match the predicate.
 
@@ -120,13 +121,13 @@ Maybe flatten the structure while keeping `random/0` and `hardcoded/1` construct
 
 - [x] Clean up docs. The `Decorum` and maybe `Prng` modules are the only ones that need to show up in the docs.
 
-- [ ] add `mix dialyzer` to GitHub action see https://github.com/jeremyjh/dialyxir/blob/master/docs/github_actions.md 
+- [ ] add `mix dialyzer` to GitHub action see https://github.com/jeremyjh/dialyxir/blob/master/docs/github_actions.md
 
-- [ ] Create seperate doc sections of functions within `Decorum` module: helpers, property testing, and generators. 
+- [ ] Create seperate doc sections of functions within `Decorum` module: helpers, property testing, and generators.
 
 - [ ] Should generators be a behavior? The generate function is a good use case for a callback. Does that effect the Enumerable implementation?
 
-### How do we make generators composible? 
+### How do we make generators composible?
 
 Users should be able to create new generators based on the library generators.
 
@@ -148,7 +149,7 @@ We could use size as a limit on the length, or we could change the weight of the
 
 ### What is a Generator?
 
-A function that takes in a Prng struct (and a size?) and returns the next value and an updated Prng struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that. 
+A function that takes in a Prng struct (and a size?) and returns the next value and an updated Prng struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that.
 It could behave like a Stream by default and internally to `check_all` the state could be tracked. The generator function is essentially the same as `next_fun` used by `Stream.unfold`.
 
 ### What is a Shrinker?
@@ -156,6 +157,7 @@ It could behave like a Stream by default and internally to `check_all` the state
 A function that takes a PRNG history, a generator, and a test function and searches through a set of shortlex smaller histories.
 
 Iterate through those histories until:
+
 - A. we find one that still fails the test
 - B. We don't find any that still fail the test after a full shrinking pass.
 - C. We try some maximum number of times.
@@ -187,7 +189,7 @@ Also, the private `check_all` function is recursive when the test function passe
 Body of `check all` uses asserts. Body of `forall` returns boolean. Using asserts seems more like what a user of ExUnit would be familiar with.
 
 Is there a way to do it inside the test macro instead of using a property macro? Or just making the property macro the only thing that’s needed? Why require a macro inside the body of another macro?
-From https://github.com/whatyouhide/stream_data/blob/main/lib/ex_unit_properties.ex it looks like 
+From https://github.com/whatyouhide/stream_data/blob/main/lib/ex_unit_properties.ex it looks like
 **the property macro is a convenience for marking tests as properties.**
 
 ### Other thoughts or questions

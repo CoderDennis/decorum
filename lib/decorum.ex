@@ -168,17 +168,31 @@ defmodule Decorum do
   @doc """
   Generates a list of values produced by the given generator.
 
-  Use a biased coin flip to determine if another value should be gerenated
+  `max_length` is used to cap the length of the list. It defaults to `:none`.
+
+  Uses a biased coin flip to determine if another value should be gerenated
   or the list should be terminated.
+
+  When `max_length` is a value other than `:none`,
+  then the probablility of terminating the list increases as the list size approaches `max_length`.
+
+  When `max_length` is `:none` the probablility of generating another value is around 7/8.
   """
-  @spec list_of(t(value)) :: t([value])
-  def list_of(%Decorum{generator: generator}) do
+  @spec list_of(t(value), non_neg_integer() | :none) :: t([value])
+  def list_of(%Decorum{generator: generator}, max_length \\ :none) do
+    bias = fn flip, index ->
+      case max_length do
+        :none -> rem(flip, 8) > 0
+        length -> rem(flip, length - index + 1) > 0
+      end
+    end
+
     new(fn prng ->
-      Stream.cycle(1..1)
-      |> Enum.reduce_while({[], prng}, fn _, {list, prng} ->
+      Stream.iterate(0, &(&1 + 1))
+      |> Enum.reduce_while({[], prng}, fn index, {list, prng} ->
         {flip, prng} = Prng.next!(prng)
 
-        if rem(flip, 8) > 0 do
+        if index < max_length and bias.(flip, index) do
           {value, prng} = generator.(prng)
           {:cont, {[value | list], prng}}
         else
@@ -192,8 +206,8 @@ defmodule Decorum do
   def list_of_length(decorum, length) do
     Stream.repeatedly(fn -> decorum end)
     |> Enum.take(length)
-    |> Decorum.zip()
-    |> Decorum.map(&Tuple.to_list/1)
+    |> zip()
+    |> map(&Tuple.to_list/1)
   end
 
   @doc """
