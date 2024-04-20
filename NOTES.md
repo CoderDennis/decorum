@@ -7,7 +7,7 @@ References to Martin are refering to Martin Janiczek. I first learned about the 
 
 Elixir Outlaws ep 2 has a good quote. Something like “shrinking is the real magic of property based testing.” Ep 4 also talks about prop testing and a debate around StreamData being included in Elixir core.
 
-### Internal representation of PRNG history.
+## Internal representation of PRNG history.
 
 We're currently using a list of 32-bit integers, which is the same as the Elm implementation.
 
@@ -22,7 +22,7 @@ What effect does size of integer stored in PRNG history have on the rand algorit
 
 Using smaller integers might make it more important to label chunks of random history the way hypothesis does. I couldn’t find the equivalent in the Elm implementation. Martin confirmed that it's not in the Elm code.
 
-### How is `:rand` thread safe when running ExUnit async true?
+## How is `:rand` thread safe when running ExUnit async true?
 
 We sidestep this question by remembering `:rand.state`.
 How does that relate to the given seed?
@@ -41,7 +41,7 @@ We can use `:rand.jump()` for the same purpose.
 
 It's important to not specify a new seed so that we're based on the one ExUnit sets up automatically.
 
-### TODO:
+## TODO:
 
 - [x] On prng playback need to distinguish between no history and getting to the end of the history. Tag as :random or :hardcoded ?
       With no history it needs to use the same seed as ExUnit, which happens automatically because we start with a call to `:rand.jump()`
@@ -125,18 +125,20 @@ It's important to not specify a new seed so that we're based on the one ExUnit s
 
 - [ ] Should generators be a behavior? The generate function is a good use case for a callback. Does that effect the Enumerable implementation?
 
-### How do we make generators composible?
+## How do we make generators composible?
 
 Users should be able to create new generators based on the library generators.
 
 Using functions such as `map/2` and `and_then/2`, new generators can be easily based on existing generators.
 `map/2` is for a simple function over generated values while `and_then/2` is for running a generator based on a generated value.
 
-### What happens when a property uses more than one generator?
+## What happens when a property uses more than one generator?
 
 Use the `zip/1` function for properties that use more than one generator.
 
-### How long of lists should the list generator produce?
+StreamData uses clauses with the `check all` macro. These are similar to `with` clauses and alloww each clause to depend on previous generated values. I'm not sure how that would work with the need to keep track of the updated `PRNG` struct.
+
+## How long of lists should the list generator produce?
 
 **StreamData gives lists up to generation size.**
 PropEr also uses an internal increasing size parameter. The sized function in PropCheck is used to get the current size parameter. In StreamData sized is a macro and the scale function is used to add a multiple of the size.
@@ -145,12 +147,14 @@ What about the biased coin flip for choosing another item? The Elm implementatio
 I don’t understand how the shrinker would know that the pair goes together. How could this relate to using the size parameter for affecting the length of the generated lists?
 We could use size as a limit on the length, or we could change the weight of the coin flip as we get closer to size.
 
-### What is a Generator?
+## What is a Generator?
 
 A function that takes in a PRNG struct (and a size?) and returns the next value and an updated PRNG struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that.
 It could behave like a Stream by default and internally to `check_all` the state could be tracked. The generator function is essentially the same as `next_fun` used by `Stream.unfold`.
 
-### What is a Shrinker?
+## What is a Shrinker?
+
+### Thoughts before I understood how it really needed to work (obsolete after refactoring into `Shrinker` module):
 
 A function that takes a PRNG history, a generator, and a test function and searches through a set of shortlex smaller histories.
 
@@ -166,7 +170,9 @@ When it finds a valid smaller history, then starts over with that one.
 
 Individually shrink integers using binary search.
 
-Keep track of histories that have been used/seen to avoid retrying them. After refactoring into `Shrinker` module, this was not necessary.
+Keep track of histories that have been used/seen to avoid retrying them.
+
+### Other shrinker thoughts:
 
 Do we shrink the first value and then shrink the rest of the history? That doesn't really work. Some shrinking needs to operate on later values only.
 
@@ -180,7 +186,7 @@ Test functions passed to `StreamData.check_all` do not raise exceptions. They re
 In the error tuple, the map contains details about original and shrunk failures.
 Also, the private `check_all` function is recursive when the test function passes.
 
-### Is there a better syntax for defining property tests in Elixir?
+## Is there a better syntax for defining property tests in Elixir?
 
 **Prefer StreamData syntax for macros like `check all`** instead of PropCheck (and PropEr) syntax of `forall`.
 
@@ -190,7 +196,7 @@ Is there a way to do it inside the test macro instead of using a property macro?
 From https://github.com/whatyouhide/stream_data/blob/main/lib/ex_unit_properties.ex it looks like
 **the property macro is a convenience for marking tests as properties.**
 
-### Other thoughts or questions
+## Other thoughts or questions
 
 In Elm implementation Fuzz.elm, why does forcedChoice need to consume a random number? How is that different from constant?
 Martin confirmed that throwing an error instead of just accepting it may not be right.
