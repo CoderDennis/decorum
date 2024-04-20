@@ -117,7 +117,7 @@ It's important to not specify a new seed so that we're based on the one ExUnit s
 
 - [x] Publish to Hex.pm
 
-- [x] Clean up docs. The `Decorum` and maybe `Prng` modules are the only ones that need to show up in the docs.
+- [x] Clean up docs. The `Decorum` and maybe `PRNG` modules are the only ones that need to show up in the docs.
 
 - [ ] add `mix dialyzer` to GitHub action see https://github.com/jeremyjh/dialyxir/blob/master/docs/github_actions.md
 
@@ -147,7 +147,7 @@ We could use size as a limit on the length, or we could change the weight of the
 
 ### What is a Generator?
 
-A function that takes in a Prng struct (and a size?) and returns the next value and an updated Prng struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that.
+A function that takes in a PRNG struct (and a size?) and returns the next value and an updated PRNG struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that.
 It could behave like a Stream by default and internally to `check_all` the state could be tracked. The generator function is essentially the same as `next_fun` used by `Stream.unfold`.
 
 ### What is a Shrinker?
