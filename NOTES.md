@@ -101,7 +101,7 @@ It's important to not specify a new seed so that we're based on the one ExUnit s
       Currently, this doesn't work with the implementation of binary search, but it does work for the shrinking
       by chunks.
 
-- [ ] Implement other basic generators such as `string`, `boolean`, etc.
+- [ ] Implement other basic generators such as `string`, `keyword_of`, etc.
 
 - [x] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values.
       It's essentially the same as `Enum.zip/1` but for Decorum generators.

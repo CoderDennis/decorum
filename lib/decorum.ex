@@ -204,6 +204,11 @@ defmodule Decorum do
     end)
   end
 
+  @doc """
+  Generates a list of values produced by the given generator with a fixed `length`.
+
+  Shrinking will apply to the values within the list, but not the list itself because of the hardcoded `length`.
+  """
   @spec list_of_length(t(value), non_neg_integer()) :: t(list(value))
   def list_of_length(decorum, length) do
     Stream.repeatedly(fn -> decorum end)
@@ -223,6 +228,18 @@ defmodule Decorum do
     new(fn prng ->
       {value, prng} = PRNG.next!(prng)
       {rem(value, max + 1), prng}
+    end)
+  end
+
+  @doc """
+  Genereates boolean values.
+  """
+  @spec boolean() :: t(boolean())
+  def boolean() do
+    uniform_integer(1)
+    |> map(fn
+      0 -> false
+      1 -> true
     end)
   end
 
