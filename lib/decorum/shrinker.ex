@@ -3,7 +3,7 @@ defmodule Decorum.Shrinker do
 
   alias Decorum.History
   alias Decorum.History.Chunk
-  alias Decorum.Prng
+  alias Decorum.PRNG
 
   @type value :: term()
 
@@ -150,14 +150,14 @@ defmodule Decorum.Shrinker do
   defp check_history([], _, _), do: :fail
 
   defp check_history(history, generator, check_function) do
-    prng = Prng.hardcoded(history)
+    prng = PRNG.hardcoded(history)
 
     try do
       {value, prng} = generator.(prng)
 
       case check_function.(value) do
         :ok -> :fail
-        {:error, message} -> {:pass, Prng.get_history(prng), value, message}
+        {:error, message} -> {:pass, PRNG.get_history(prng), value, message}
       end
     rescue
       Decorum.EmptyHistoryError -> :fail

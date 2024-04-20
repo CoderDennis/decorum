@@ -5,6 +5,6 @@ defmodule ReadmeTest do
     readme_markdown = File.read!(Path.join(__DIR__, "../README.md"))
     mix_config = Mix.Project.config()
     version = mix_config[:version]
-    assert readme_markdown =~ ~s({:decorum, "~> #{version}"})
+    assert readme_markdown =~ ~s({:decorum, "~> #{version}", only: :test})
   end
 end

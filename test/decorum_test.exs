@@ -2,7 +2,7 @@ defmodule DecorumTest do
   use ExUnit.Case, async: true
   doctest Decorum
 
-  alias Decorum.Prng
+  alias Decorum.PRNG
 
   require Integer
 
@@ -14,7 +14,7 @@ defmodule DecorumTest do
 
   describe "Generators" do
     test "map" do
-      prng = Prng.hardcoded(Enum.to_list(1..3))
+      prng = PRNG.hardcoded(Enum.to_list(1..3))
 
       values =
         Decorum.map(Decorum.prng_values(), fn x -> x * 2 end)
@@ -69,7 +69,7 @@ defmodule DecorumTest do
     end
 
     test "filter is_even with hardcoded values 1 to 5 returns 2 and 4" do
-      prng = Prng.hardcoded(Enum.to_list(1..5))
+      prng = PRNG.hardcoded(Enum.to_list(1..5))
 
       values =
         Decorum.prng_values()

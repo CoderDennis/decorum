@@ -3,12 +3,12 @@ defmodule Decorum do
   Documentation for `Decorum`.
   """
 
-  alias Decorum.Prng
+  alias Decorum.PRNG
   alias Decorum.Shrinker
 
   @type value :: term()
 
-  @type generator_fun(value) :: (Prng.t() -> {value, Prng.t()})
+  @type generator_fun(value) :: (PRNG.t() -> {value, PRNG.t()})
 
   @type max_length :: non_neg_integer() | :none
 
@@ -25,12 +25,12 @@ defmodule Decorum do
   end
 
   @doc """
-  Used to run a Decorum generator with a specific Prng struct.
+  Used to run a Decorum generator with a specific `PRNG` struct.
 
-  Takes a Decorum struct and a Prng struct and returns a lazy Enumerable
+  Takes a Decorum struct and a `PRNG` struct and returns a lazy Enumerable
   of generated values.
   """
-  @spec stream(t(value), Prng.t()) :: Enumerable.t(value)
+  @spec stream(t(value), PRNG.t()) :: Enumerable.t(value)
   def stream(%__MODULE__{generator: generator}, prng) do
     Stream.unfold(prng, generator)
   end
@@ -51,11 +51,11 @@ defmodule Decorum do
   def check_all(%__MODULE__{generator: generator}, test_fn) when is_function(test_fn, 1) do
     1..100
     |> Enum.each(fn _ ->
-      {value, prng} = generator.(Prng.random())
+      {value, prng} = generator.(PRNG.random())
 
       case check(test_fn, value) do
         {:error, message} ->
-          Shrinker.shrink(check(test_fn), generator, value, Prng.get_history(prng), message)
+          Shrinker.shrink(check(test_fn), generator, value, PRNG.get_history(prng), message)
 
         :ok ->
           :ok
@@ -90,7 +90,7 @@ defmodule Decorum do
   """
   @spec prng_values() :: t(non_neg_integer)
   def prng_values do
-    new(fn prng -> Prng.next!(prng) end)
+    new(fn prng -> PRNG.next!(prng) end)
   end
 
   @doc """
@@ -192,7 +192,7 @@ defmodule Decorum do
     new(fn prng ->
       Stream.iterate(0, &(&1 + 1))
       |> Enum.reduce_while({[], prng}, fn index, {list, prng} ->
-        {flip, prng} = Prng.next!(prng)
+        {flip, prng} = PRNG.next!(prng)
 
         if index < max_length and bias.(flip, index) do
           {value, prng} = generator.(prng)
@@ -221,7 +221,7 @@ defmodule Decorum do
   @spec uniform_integer(non_neg_integer()) :: t(non_neg_integer())
   def uniform_integer(max) do
     new(fn prng ->
-      {value, prng} = Prng.next!(prng)
+      {value, prng} = PRNG.next!(prng)
       {rem(value, max + 1), prng}
     end)
   end
@@ -248,6 +248,9 @@ defmodule Decorum do
 
   @doc """
   Generates alphanumeric atoms.
+
+  *Warning!* Be careful when generating random atoms as the BEAM has a limit on how many atoms can be created
+  and it will crash if that limit is exceeded.
   """
   @spec atom(max_length()) :: t(atom())
   def atom(max_length \\ :none) do
@@ -401,7 +404,7 @@ defmodule Decorum do
 
   defimpl Enumerable do
     def reduce(decorum, acc, fun) do
-      reduce(decorum, acc, fun, Prng.random())
+      reduce(decorum, acc, fun, PRNG.random())
     end
 
     defp reduce(_decorum, {:halt, acc}, _fun, _prng) do

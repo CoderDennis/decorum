@@ -1,6 +1,6 @@
-defmodule Decorum.Prng do
+defmodule Decorum.PRNG do
   @moduledoc """
-  `Prng` (pseudo random number generator) is a wrapper around the `:rand` module.
+  `PRNG` (pseudo random number generator) is a wrapper around the `:rand` module.
 
   It has 2 states:
   1. Random
@@ -77,15 +77,15 @@ defmodule Decorum.Prng do
   def hardcoded(history), do: __MODULE__.Hardcoded.new(history)
 
   @doc """
-  Takes a `Prng` struct and returns a tuple with the next random value
-  and an updated `Prng` struct.
+  Takes a `PRNG` struct and returns a tuple with the next random value
+  and an updated `PRNG` struct.
 
   When in `Random` state, `next!/1` is not expected to fail.
 
   When in `Hardcoded` state, `next!/1` could raise a `Decorum.EmptyHistoryError`.
 
   Generators will call `next!/1` to get a value to use when
-  generating test values. They should also return the updated `Prng` struct.
+  generating test values. They should also return the updated `PRNG` struct.
   """
   @spec next!(prng :: t()) :: {non_neg_integer(), t()}
   def next!(%__MODULE__.Random{} = prng), do: __MODULE__.Random.next!(prng)

@@ -107,9 +107,7 @@ It's important to not specify a new seed so that we're based on the one ExUnit s
       It's essentially the same as `Enum.zip/1` but for Decorum generators.
       It looks like StreamData has a generator named `tuple` which does this with a tuple of generators as its input.
 
-- [ ] Rename Prng module to Random?
-      I don’t love the name Prng.
-      Maybe flatten the structure while keeping `random/0` and `hardcoded/1` constructor functions.
+- [x] Rename Prng module to PRNG
 
 - [x] Add `filter/2` function that takes a generator and a predicate and filters out values that don't match the predicate.
 
