@@ -43,7 +43,7 @@ by adding `decorum` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:decorum, "~> 0.1.1", only: :test}
+    {:decorum, "~> 0.1.2", only: :test}
   ]
 end
 ```
