@@ -65,13 +65,11 @@ defmodule Decorum do
 
   @spec check((value -> nil), value) :: Shrinker.check_result()
   def check(test_fn, test_value) when is_function(test_fn, 1) do
-    try do
-      test_fn.(test_value)
-      :ok
-    rescue
-      exception ->
-        {:error, exception.message}
-    end
+    test_fn.(test_value)
+    :ok
+  rescue
+    exception ->
+      {:error, exception.message}
   end
 
   @spec check((value -> nil)) :: Shrinker.check_function(value)
@@ -194,6 +192,7 @@ defmodule Decorum do
       |> Enum.reduce_while({[], prng}, fn index, {list, prng} ->
         {flip, prng} = PRNG.next!(prng)
 
+        # credo:disable-for-next-line Credo.Check.Refactor.Nesting
         if index < max_length and bias.(flip, index) do
           {value, prng} = generator.(prng)
           {:cont, {[value | list], prng}}
