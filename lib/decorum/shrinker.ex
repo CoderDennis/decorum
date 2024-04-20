@@ -26,13 +26,6 @@ defmodule Decorum.Shrinker do
           History.t(),
           String.t()
         ) :: :ok
-  def shrink(_, _, value, [], message) do
-    # TODO: figure out why this function gets called with an empty history.
-    raise Decorum.EmptyHistoryError,
-      message: Enum.join([inspect(value), message], "\n\n"),
-      value: value
-  end
-
   def shrink(check_function, generator, value, history, message) do
     case shrink_by_chunks(check_function, generator, history) do
       {:pass, history, value, message} ->
