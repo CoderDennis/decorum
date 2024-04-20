@@ -11,7 +11,7 @@ defmodule ShrinkingChallengeTest do
     %Decorum.PropertyError{value: value} =
       assert_raise Decorum.PropertyError,
                    fn ->
-                     Decorum.integer(-32768..32767)
+                     Decorum.integer(-32_768..32_767)
                      |> Decorum.list_of()
                      |> Decorum.filter(fn lst ->
                        sum(lst) < 256
@@ -82,16 +82,16 @@ defmodule ShrinkingChallengeTest do
   end
 
   defp overflow(n) do
-    if n > 32767 do
-      overflow(n - 65536)
+    if n > 32_767 do
+      overflow(n - 65_536)
     else
       n
     end
   end
 
   defp underflow(n) do
-    if n < -32768 do
-      underflow(n + 65536)
+    if n < -32_768 do
+      underflow(n + 65_536)
     else
       n
     end

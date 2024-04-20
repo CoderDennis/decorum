@@ -70,7 +70,7 @@ defmodule Decorum.PRNG do
 
   @doc false
   @spec random() :: t()
-  def random(), do: __MODULE__.Random.new()
+  def random, do: __MODULE__.Random.new()
 
   @doc false
   @spec hardcoded(history :: Decorum.History.t()) :: t()

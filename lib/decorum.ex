@@ -235,7 +235,7 @@ defmodule Decorum do
   Genereates boolean values.
   """
   @spec boolean() :: t(boolean())
-  def boolean() do
+  def boolean do
     uniform_integer(1)
     |> map(fn
       0 -> false
@@ -249,7 +249,7 @@ defmodule Decorum do
   A byte is an integer between `0` and `255`.
   """
   @spec byte() :: t(byte())
-  def byte() do
+  def byte do
     uniform_integer(255)
   end
 
