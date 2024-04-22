@@ -17,8 +17,7 @@ What is the internal representation of integers in the BEAM? Small integer is 1 
 
 What effect does size of integer stored in PRNG history have on the rand algorithm used? If only storing 32-bit ints, then it doesn't matter.
 
-- [ ] Should we use a bytes as is done in Hypothesis?
-      No matter what size ints we store, when a larger value is requested, we need to use more than one of them.
+- [ ] Should we use a bytes as is done in Hypothesis? No matter what size ints we store, when a larger value is requested, we need to use more than one of them.
 
 Using smaller integers might make it more important to label chunks of random history the way hypothesis does. I couldn’t find the equivalent in the Elm implementation. Martin confirmed that it's not in the Elm code.
 
