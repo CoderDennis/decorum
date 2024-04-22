@@ -44,7 +44,6 @@ It's important to not specify a new seed so that we're based on the one ExUnit s
 ## TODO:
 
 - [x] On prng playback need to distinguish between no history and getting to the end of the history. Tag as :random or :hardcoded ?
-      With no history it needs to use the same seed as ExUnit, which happens automatically because we start with a call to `:rand.jump()`
 
 - [x] Simple history replay should be easy to test.
 
@@ -56,8 +55,7 @@ It's important to not specify a new seed so that we're based on the one ExUnit s
 
 - [x] Catch errors raised by `body_fn` so we can capture PRNG history and enter shrinking cycle.
 
-- [ ] Format raised error message to include generated values and shrinking statistics.
-      Use Telemetry for metrics and stats?
+- [ ] Format raised error message to include generated values and shrinking statistics. Use Telemetry for metrics and stats?
 
 - [x] Include `value` field in `PropertyError`.
 
@@ -71,9 +69,7 @@ It's important to not specify a new seed so that we're based on the one ExUnit s
 
 - [x] Keep track of seen histories to avoid trying them again. (No longer needed after refactoring into `Shrinker` module?)
 
-- [x] Try a new implementation of shrinking. Create multiple histories from a given history. Test all of them against test_fn.
-      Keep best (shortlex smallest) that still fails the test and re-start the shrinking process with that one as the input.
-      Copy more of the elm-test implementation. Create a `Shrinker` module.
+- [x] Try a new implementation of shrinking. Create multiple histories from a given history. Test all of them against test_fn. Keep best (shortlex smallest) that still fails the test and re-start the shrinking process with that one as the input. Copy more of the elm-test implementation. Create a `Shrinker` module.
 
 - [x] Put raw chunk manipulation functions in `History` and test them.
 
@@ -97,15 +93,11 @@ It's important to not specify a new seed so that we're based on the one ExUnit s
 
 - [ ] Add configuration option for how many times to run the test body.
 
-- [x] Only feed used history into next round of shrinking? Discard unused values at the end of history.
-      Currently, this doesn't work with the implementation of binary search, but it does work for the shrinking
-      by chunks.
+- [x] Only feed used history into next round of shrinking? Discard unused values at the end of history. Currently, this doesn't work with the implementation of binary search, but it does work for the shrinking by chunks.
 
 - [ ] Implement other basic generators such as `string`, `keyword_of`, etc.
 
-- [x] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values.
-      It's essentially the same as `Enum.zip/1` but for Decorum generators.
-      It looks like StreamData has a generator named `tuple` which does this with a tuple of generators as its input.
+- [x] Add a `zip/1` function that takes a list of generators and emits a tuple with each of their values. It's essentially the same as `Enum.zip/1` but for Decorum generators. It looks like StreamData has a generator named `tuple` which does this with a tuple of generators as its input.
 
 - [x] Rename Prng module to PRNG
 
