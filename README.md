@@ -22,7 +22,9 @@ See [Implementation Notes](NOTES.md) for my ongoing thoughts, questions, and TOD
 
 ## Background
 
-- https://youtu.be/WE5bmt0zBxg?si=fyg6R_O3iRrbuc7_ I first learned about the Hypothesis form of shrinking PRNG history from this talk by Martin Janiczek. He also implemented it in elm-test.
+- I first learned about the Hypothesis form of shrinking PRNG history from a talk
+  by Martin Janiczek that was on YouTupe, but is no longer available.
+  He also implemented it in elm-test.
 
 - https://hypothesis.works/articles/compositional-shrinking/
   David R. MacIver, the creator of Hypothesis and the inventor of the internal shrinking concept we are using.
@@ -54,4 +56,4 @@ be found at <https://hexdocs.pm/decorum>.
 
 ## ElixirConf EU 2024
 
-I will be presenting a talk about internal shrinking and this library at [ElixirConf EU 2024](https://www.elixirconf.eu/talks/the-magic-of-internal-shrinking-for-property-based-testing/) in Lisbon on April 18-19.
+I gave a talk about internal shrinking and this library at [ElixirConf EU 2024](https://www.elixirconf.eu/talks/the-magic-of-internal-shrinking-for-property-based-testing/).

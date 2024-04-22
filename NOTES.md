@@ -3,7 +3,7 @@
 These are my thoughts and notes while investigating how this library should be implemented.
 I'm including it in the repo to preserve revision history as I find answers to my own questions and evolve the design.
 
-References to Martin are refering to Martin Janiczek. I first learned about the Hypothesis form of shrinking from this YouTube video https://youtu.be/WE5bmt0zBxg?si=fyg6R_O3iRrbuc7_ He also implemented this in elm-test.
+References to Martin are refering to Martin Janiczek. I first learned about the Hypothesis form of shrinking from a YouTube video that is no longer available. He also implemented this in elm-test.
 
 Elixir Outlaws ep 2 has a good quote. Something like “shrinking is the real magic of property based testing.” Ep 4 also talks about prop testing and a debate around StreamData being included in Elixir core.
 
@@ -136,21 +136,27 @@ Using functions such as `map/2` and `and_then/2`, new generators can be easily b
 
 Use the `zip/1` function for properties that use more than one generator.
 
-StreamData uses clauses with the `check all` macro. These are similar to `with` clauses and alloww each clause to depend on previous generated values. I'm not sure how that would work with the need to keep track of the updated `PRNG` struct.
+StreamData uses clauses with the `check all` macro. These are similar to `with` clauses and allow each clause to depend on previous generated values.
+I'm not sure how that would work with the need to keep track of the updated `PRNG` struct.
 
 ## How long of lists should the list generator produce?
 
 **StreamData gives lists up to generation size.**
-PropEr also uses an internal increasing size parameter. The sized function in PropCheck is used to get the current size parameter. In StreamData sized is a macro and the scale function is used to add a multiple of the size.
+PropEr also uses an internal increasing size parameter. The sized function in PropCheck is used to get the current size parameter.
+In StreamData sized is a macro and the scale function is used to add a multiple of the size.
 
 What about the biased coin flip for choosing another item? The Elm implementation uses it.
-I don’t understand how the shrinker would know that the pair goes together. How could this relate to using the size parameter for affecting the length of the generated lists?
-We could use size as a limit on the length, or we could change the weight of the coin flip as we get closer to size.
+~~I don’t understand how the shrinker would know that the pair goes together.~~
+
+How could this relate to using the size parameter for affecting the length of the generated lists?
+We could use size as a limit on the length, or we could change the weight of the coin flip as we get closer to size. (Support for `max_length` in `list_of` is now in place.)
 
 ## What is a Generator?
 
-A function that takes in a PRNG struct (and a size?) and returns the next value and an updated PRNG struct. Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that.
-It could behave like a Stream by default and internally to `check_all` the state could be tracked. The generator function is essentially the same as `next_fun` used by `Stream.unfold`.
+A function that takes in a PRNG struct (and a size?) and returns the next value and an updated PRNG struct.
+Implementing a stream doesn’t give the updated prng struct from which to get the history. But outside of running properties, we don't need it to do that.
+It could behave like a Stream by default and internally to `check_all` the state could be tracked.
+The generator function is essentially the same as `next_fun` used by `Stream.unfold`.
 
 ## What is a Shrinker?
 
@@ -178,7 +184,8 @@ Do we shrink the first value and then shrink the rest of the history? That doesn
 
 Storing larger integers might make shrinking less efficient because it takes longer to reach low values. Binary search solves this issue.
 
-Is the process of rerunning the test and trying further shrinking similar to genetic algorithms? Not really. I do think it's similar, but I didn't find any value in trying to implement it that way over just copying how other libraries based on Hypothesis work.
+Is the process of rerunning the test and trying further shrinking similar to genetic algorithms? Not really.
+I do think it's similar, but I didn't find any value in trying to implement it that way over just copying how other libraries based on Hypothesis work.
 
 For a given test, shrinking shouldn’t need to be parallelized.
 
@@ -192,7 +199,8 @@ Also, the private `check_all` function is recursive when the test function passe
 
 Body of `check all` uses asserts. Body of `forall` returns boolean. Using asserts seems more like what a user of ExUnit would be familiar with.
 
-Is there a way to do it inside the test macro instead of using a property macro? Or just making the property macro the only thing that’s needed? Why require a macro inside the body of another macro?
+Is there a way to do it inside the test macro instead of using a property macro?
+Or just making the property macro the only thing that’s needed? Why require a macro inside the body of another macro?
 From https://github.com/whatyouhide/stream_data/blob/main/lib/ex_unit_properties.ex it looks like
 **the property macro is a convenience for marking tests as properties.**
 
@@ -205,5 +213,6 @@ I considered setting up property test macros and using them to build up tests fo
 Just use `check_all` directly without the macros. Add macros later.
 
 How important is it for `Decorum.uniform_integer/1` to produce uniformly random values?
-I tried the code from https://rosettacode.org/wiki/Verify_distribution_uniformity/Chi-squared_test and its `chi2IsUniform/2` function returned false for all the examples I ran.
+I tried the code from https://rosettacode.org/wiki/Verify_distribution_uniformity/Chi-squared_test and its `chi2IsUniform/2`
+function returned false for all the examples I ran.
 The `chi2Probability/2` results were around `1.69e-13` when they were expected to be greater than `0.05`.
